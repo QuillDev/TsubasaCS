@@ -22,14 +22,12 @@ namespace Tsubasa.Services
         {
             _lavaNode = lavaNode;
         }
-
-        //TODO Wtf dis do
-        //Create a dictionary for bot settings??
-        private readonly Lazy<ConcurrentDictionary<ulong, MusicSettings>> LazySettings =
-            new Lazy<ConcurrentDictionary<ulong, MusicSettings>>();
+        
+        
+        private readonly Lazy<ConcurrentDictionary<ulong, MusicSettings>> LazySettings = new Lazy<ConcurrentDictionary<ulong, MusicSettings>>();
 
         private ConcurrentDictionary<ulong, MusicSettings> Options => LazySettings.Value;
-
+        
         public async Task<Embed> JoinAsync(SocketGuildUser user)
         {
 	        Console.WriteLine("Ran join command");
@@ -43,7 +41,13 @@ namespace Tsubasa.Services
                 return await EmbedHelper.CreateBasicEmbed("Music, Join",
                     $"I can't join another voice channel until I'm disconnected.");
             
-            _lavaNode.JoinAsync(user.VoiceChannel);
+            //Add this to the dictionary
+            Options.TryAdd(user.Guild.Id, new MusicSettings
+            {
+	            Master = user
+            });
+
+            await _lavaNode.JoinAsync(user.VoiceChannel);
 
             return await EmbedHelper.CreateBasicEmbed("Music Join", $"Joined {user.VoiceChannel}");
         }
@@ -55,9 +59,16 @@ namespace Tsubasa.Services
             
             if (user.VoiceChannel == null)
                 return await EmbedHelper.CreateBasicEmbed("Music Play", "You must be in a channel first!");
-
+            
+            //If the guild does not have a player, join the server when callig play.
+            if (!_lavaNode.HasPlayer(guild))
+            {
+	            await JoinAsync(user);
+            }
+            
             LavaPlayer player = _lavaNode.GetPlayer(guild);
             
+
             try
             {
                 //TODO Add other sources (Twitch/Spotify/Soundcloud/etc..)
@@ -160,19 +171,17 @@ namespace Tsubasa.Services
 			{
 				var player = _lavaNode.GetPlayer(user.Guild);
 				if (player == null)
-					return await EmbedHelper.CreateBasicEmbed("Music, List", $"Could not aquire player.\nAre you using the bot right now?");
-				if (player.Queue.Count == 1)
-					return await EmbedHelper.CreateBasicEmbed("Music Skipping", "This is the last song in the queue, so I have stopped playing."); await player.StopAsync();
+					return await EmbedHelper.CreateBasicEmbed("Music, List", $"Could not acquire player.\nAre you using the bot right now?");
 				if (player.Queue.Count == 0)
 					return await EmbedHelper.CreateBasicEmbed("Music Skipping", "There are no songs to skip!");
 				try
 				{
 						var currentTrack = player.Track;
 						await player.SkipAsync();
-						return await EmbedHelper.CreateBasicEmbed("Music Skip", $"Successfully skipped {currentTrack.Title}");
+						return await EmbedHelper.CreateBasicEmbed("Music Skip", $"Successfully skipped {currentTrack.Title}\nNow Playing{player.Track.Title}");
 				}
 				catch (Exception ex){
-					 return await EmbedHelper.CreateBasicEmbed("Music Skipping Exception:", ex.ToString());
+					return await EmbedHelper.CreateBasicEmbed("Music Skipping Exception:", ex.ToString());
 				}
 				
 			}
@@ -225,6 +234,39 @@ namespace Tsubasa.Services
 			}
 		}
 
+		public async Task<Embed> SeekAsync(SocketGuildUser user, int seconds)
+		{
+			LavaPlayer player = _lavaNode.GetPlayer(user.Guild);
+
+			TimeSpan seekPoint = TimeSpan.FromSeconds(seconds);
+			
+			await player.SeekAsync(seekPoint);
+
+			return await EmbedHelper.CreateBasicEmbed("Music Seek", $"Skipped to {seekPoint.TotalMinutes}");
+		}
+
+		public async Task<Embed> LoopTrack(SocketGuildUser user)
+		{
+
+			try
+			{
+				//Get the option
+				Options.TryGetValue(user.Guild.Id, out var option);
+				
+				//add or update values in the thing i guess fuck
+				Options.TryUpdate(user.Guild.Id, new MusicSettings{
+					RepeatTrack = !option.RepeatTrack
+				}, option);
+
+				return await EmbedHelper.CreateBasicEmbed("Music Loop", $"Looping set to {!option.RepeatTrack}");
+			}
+			catch (Exception exception)
+			{
+				return await EmbedHelper.CreateBasicEmbed("Music Loop", $"The dev fucked up. idk what this error even is");
+			}
+
+			
+		}
 		public async Task OnTrackFinished(TrackEndedEventArgs args)
 		{
 			TrackEndReason reason = args.Reason;
@@ -233,13 +275,23 @@ namespace Tsubasa.Services
 			
 			if (!reason.ShouldPlayNext())
 				return;
+			
+			//Get the option
+			Options.TryGetValue(player.VoiceChannel.Guild.Id, out var option);
+
+			if (option.RepeatTrack)
+			{
+				//Play the track again
+				await player.PlayAsync(track);
+				return;
+			}
 
 			if (!player.Queue.TryDequeue(out var item) || !(item is LavaTrack nextTrack))
 			{
 				await player.TextChannel?.SendMessageAsync($"There are no more songs left in queue.");
 				return;
 			}
-
+			
 			await player.PlayAsync(nextTrack);
 
 			EmbedBuilder embed = new EmbedBuilder();

@@ -61,6 +61,7 @@ namespace Tsubasa.Services
 
         private Task DiscordClientDisconnected(Exception exception, DiscordSocketClient shard)
         {
+            //Log that the shard was diconnected
             Logger.Log(new LogMessage(LogSeverity.Warning, $"Shard {shard.ShardId} Disconnected", exception.Message));
             return Task.CompletedTask;
         }

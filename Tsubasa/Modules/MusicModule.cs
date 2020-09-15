@@ -53,6 +53,18 @@ namespace Tsubasa.Modules
         [Command("Resume")]
         public async Task Resume()
             => await ReplyAsync(embed: await _music.Pause((SocketGuildUser)Context.User));
+        
+        //TODO See if there's a better way to implement different keywords
+        [Command("Seek")]
+        public async Task Seek(int seconds)
+            => await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser)Context.User, seconds));
+        
+        [Command("Time")]
+        public async Task Time(int seconds)
+            => await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser)Context.User, seconds));
+        [Command("Loop")]
+        public async Task Loop()
+            => await ReplyAsync(embed: await _music.LoopTrack((SocketGuildUser)Context.User));
     }
     
     

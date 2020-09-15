@@ -17,7 +17,6 @@ using Victoria;
 
 namespace Tsubasa
 {
-    //TODO Segment parts of this file into more appropriate places
     class Program
     {
         private const string configPath = "config.toml";

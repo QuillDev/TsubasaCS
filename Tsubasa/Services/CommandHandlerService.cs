@@ -35,7 +35,6 @@ namespace Tsubasa.Services
 
         public async Task HandleCommandAsync(SocketMessage arg)
         {
-            Console.WriteLine("Got Here!");
             if (!(arg is SocketUserMessage msg)) return;
             
             //position where prefix ends and commands begin
@@ -44,7 +43,6 @@ namespace Tsubasa.Services
             //Checks if we have the prefix or if we mentioned the bot
             if (!msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) return;
             
-            Console.WriteLine("Got Past check!");
             //create the command context to prepare it for execution
             var context = new ShardedCommandContext(_client, msg);
             
