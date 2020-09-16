@@ -13,59 +13,102 @@ namespace Tsubasa.Modules
         {
             _music = music;
         }
-        
+
         [Command("join")]
         public async Task MusicJoin()
-            => await _music.JoinAsync((SocketGuildUser)Context.User);
+        {
+            await _music.JoinAsync((SocketGuildUser) Context.User);
+        }
 
         [Command("play")]
-        public async Task MusicPlay([Remainder]string search)
-            => await ReplyAsync(embed: await _music.PlayAsync((SocketGuildUser)Context.User, search));
+        public async Task MusicPlay([Remainder] string search)
+        {
+            await ReplyAsync(embed: await _music.PlayAsync((SocketGuildUser) Context.User, search));
+        }
 
         [Command("leave")]
         public async Task MusicLeave()
-            => await ReplyAsync(embed: await _music.LeaveAsync((SocketGuildUser)Context.User));
+        {
+            await ReplyAsync(embed: await _music.LeaveAsync((SocketGuildUser) Context.User));
+        }
 
         [Command("queue")]
         public async Task MusicQueue()
-            => await ReplyAsync(embed: await _music.ListAsync((SocketGuildUser)Context.User));
+        {
+            await ReplyAsync(embed: await _music.ListAsync((SocketGuildUser) Context.User));
+        }
 
         [Command("skip")]
         public async Task SkipTrack()
-            => await ReplyAsync(embed: await _music.SkipTrackAsync((SocketGuildUser)Context.User));
+        {
+            await ReplyAsync(embed: await _music.SkipTrackAsync((SocketGuildUser) Context.User));
+        }
 
         [Command("volume")]
         public async Task Volume(int volume)
-            => await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser)Context.User, volume));
-        
+        {
+            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, volume));
+        }
+
         [Command("crank it")]
         public async Task CrankIt()
-            => await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser)Context.User, 149));
-        
+        {
+            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, 149));
+        }
+
         [Command("chill it")]
         public async Task ChillIt()
-            => await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser)Context.User, 40));
+        {
+            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, 40));
+        }
 
         [Command("Pause")]
         public async Task Pause()
-            => await ReplyAsync(embed: await _music.Pause((SocketGuildUser)Context.User));
+        {
+            await ReplyAsync(embed: await _music.Pause((SocketGuildUser) Context.User));
+        }
 
         [Command("Resume")]
         public async Task Resume()
-            => await ReplyAsync(embed: await _music.Pause((SocketGuildUser)Context.User));
-        
+        {
+            await ReplyAsync(embed: await _music.Pause((SocketGuildUser) Context.User));
+        }
+
         //TODO See if there's a better way to implement different keywords
         [Command("Seek")]
         public async Task Seek(int seconds)
-            => await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser)Context.User, seconds));
-        
+        {
+            await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser) Context.User, seconds));
+        }
+
         [Command("Time")]
         public async Task Time(int seconds)
-            => await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser)Context.User, seconds));
+        {
+            await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser) Context.User, seconds));
+        }
+
         [Command("Loop")]
         public async Task Loop()
-            => await ReplyAsync(embed: await _music.LoopTrack((SocketGuildUser)Context.User));
+        {
+            await ReplyAsync(embed: await _music.LoopTrack((SocketGuildUser) Context.User));
+        }
+
+        [Command("Art")]
+        public async Task Art()
+        {
+            await ReplyAsync(embed: await _music.getTrackArt((SocketGuildUser) Context.User));
+        }
+
+        [Command("Playing")]
+        public async Task Playing()
+        {
+            await ReplyAsync(embed: await _music.Playing((SocketGuildUser) Context.User));
+        }
+
+        [Command("Lyrics")]
+        public async Task Lyrics()
+        {
+            await ReplyAsync(embed: await _music.Lyrics((SocketGuildUser) Context.User));
+        }
     }
-    
-    
 }

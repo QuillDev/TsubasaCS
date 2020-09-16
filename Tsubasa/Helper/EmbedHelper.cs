@@ -4,7 +4,7 @@ using Discord.WebSocket;
 
 namespace Tsubasa.Helper
 {
-    public class EmbedHelper
+    public static class EmbedHelper
     {
         public enum EmbedMessageType
         {
@@ -17,33 +17,32 @@ namespace Tsubasa.Helper
 
         public static Embed CreateEmbed(string title, string body, EmbedMessageType type, SocketUser target)
         {
-            
             //Create the embed builder
             var embed = new EmbedBuilder();
-            
+
             //get the users avatar url
             var thumbnailUrl = target.GetAvatarUrl();
-            
+
             //Build the author ofhte embed
-            var author = new EmbedAuthorBuilder()
+            var author = new EmbedAuthorBuilder
             {
                 Name = target.Username,
                 IconUrl = thumbnailUrl
             };
-            
+
             //Add properties to the embed
             embed.WithAuthor(author);
             embed.WithTitle(title);
             embed.WithDescription(body);
             embed.WithColor(GetEmbedColor(type));
             embed.WithCurrentTimestamp();
-            
+
             return embed.Build();
         }
 
-        public static async Task<Embed> CreateBasicEmbed(string title = null, string description = null, string footer = null)
+        public static async Task<Embed> CreateBasicEmbed(string title = null, string description = null,
+            string footer = null)
         {
-            
             //Create the embed using the given data
             var embed = await Task.Run(() => new EmbedBuilder()
                 .WithTitle(title)
@@ -56,6 +55,7 @@ namespace Tsubasa.Helper
 
             return embed;
         }
+
         private static Color GetEmbedColor(EmbedMessageType type)
         {
             //determine embed color based on the embed type
@@ -71,9 +71,7 @@ namespace Tsubasa.Helper
                     return Color.Red;
                 default:
                     return Color.Purple;
-                
             }
-
         }
     }
 }

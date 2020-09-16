@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Dynamic;
-using System.Text;
-
-namespace Tsubasa.Models
+﻿namespace Tsubasa.Models
 {
     public class BotSettings
     {
