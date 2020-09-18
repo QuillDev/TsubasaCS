@@ -18,6 +18,7 @@ using Victoria.Responses.Rest;
 namespace Tsubasa.Services
 {
     //TODO This in places we can https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/async/start-multiple-async-tasks-and-process-them-as-they-complete
+    //TODO Rework the rest of this file to the standard of PlayAsync()!
     public class MusicService
     {
         private readonly LavaNode _lavaNode;
@@ -35,7 +36,6 @@ namespace Tsubasa.Services
 
         public async Task<Embed> JoinAsync(SocketGuildUser user)
         {
-            //Get the guild off the user
             IGuild guild = user.Guild;
 
             if (user.VoiceChannel == null)
@@ -52,16 +52,12 @@ namespace Tsubasa.Services
             });
 
             await _lavaNode.JoinAsync(user.VoiceChannel);
-
+            
             return await EmbedHelper.CreateBasicEmbed("Music Join", $"Joined {user.VoiceChannel}");
         }
 
         public async Task<Embed> PlayAsync(SocketGuildUser user, string query = null)
         {
-            
-            //Test timing
-            var stopwatch = Stopwatch.StartNew();
-            
             //TODO This needs a MAJOR Refactor. plz fix
             //Get the guild off the user
             IGuild guild = user.Guild;
@@ -78,9 +74,8 @@ namespace Tsubasa.Services
             
             try
             {
-                //TODO Add other sources (Twitch/Spotify/etc..)
-                //create a var to save the track to
-
+                //TODO Add other sources (Twitch/etc..)
+                
                 //Search for the formatted song url
                 var urls = await TsubasaSearch.GetSongUrlAsync(query);
                 
@@ -122,14 +117,13 @@ namespace Tsubasa.Services
                         player.Queue.Enqueue(track); 
                         continue;
                     }
-                        
+                    
+                    //check if the player has joined the channel
+                    
                     //if the player is not playing then we can play the track
                     await player.PlayAsync(track);
                 }
                 
-                //TODO remove
-                stopwatch.Stop();
-                Console.WriteLine(stopwatch.Elapsed);
                 //if there was only one song in the master track list, put a cute message about us adding it
                 if (masterTrackList.Count == 1)
                     return await EmbedHelper.CreateBasicEmbed("Track Loader",
@@ -141,7 +135,8 @@ namespace Tsubasa.Services
             }
             catch (Exception e)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music, Play Exception", e.Message);
+                Console.WriteLine(e.StackTrace);
+                return await EmbedHelper.CreateBasicEmbed("Music, Play Exception", $"An error occured when processing your query {query} it was likely invalid, or there was a networking issue on our side!");
             }
         }
 
@@ -332,7 +327,7 @@ namespace Tsubasa.Services
             }
         }
 
-        public async Task<Embed> getTrackArt(SocketGuildUser user)
+        public async Task<Embed> GetTrackArt(SocketGuildUser user)
         {
             var player = _lavaNode.GetPlayer(user.Guild);
 
@@ -498,7 +493,11 @@ namespace Tsubasa.Services
             {
                 //Make sure the text channel exists
                 if (player.TextChannel != null)
-                    await player.TextChannel?.SendMessageAsync("There are no more songs left in queue.");
+                    //Say there are no more songs in the queue
+                    await player.TextChannel?.SendMessageAsync("There are no more songs left in queue. Disconnecting");
+                
+                //Leave the voice channel without using leave async
+                await _lavaNode.LeaveAsync(player.VoiceChannel);
                 return;
             }
 
