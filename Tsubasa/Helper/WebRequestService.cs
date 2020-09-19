@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Tsubasa.Helper
 {
-    public class WebJson
+    public class WebRequestService
     {
         /// <summary>
         ///     Gets JSON data from a remote url asynchronously
@@ -27,7 +27,7 @@ namespace Tsubasa.Helper
             {
                 using (var sr = new StreamReader(stream ?? throw new Exception("RequestJson stream reader was null")))
                 {
-                    content = await sr.ReadToEndAsync();
+                    content = await sr.ReadToEndAsync().ConfigureAwait(false);
                 }
             }
 

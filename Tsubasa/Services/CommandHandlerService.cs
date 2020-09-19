@@ -46,7 +46,7 @@ namespace Tsubasa.Services
             var context = new ShardedCommandContext(_client, msg);
 
             //execute the command and return whether there was an error
-            var result = await _commands.ExecuteAsync(context, argPos, _services);
+            await _commands.ExecuteAsync(context, argPos, _services);
         }
     }
 }

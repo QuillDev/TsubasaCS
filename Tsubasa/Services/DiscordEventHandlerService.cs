@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Tsubasa.Services.Music_Services;
 using Victoria;
 
 namespace Tsubasa.Services
@@ -14,7 +15,7 @@ namespace Tsubasa.Services
         private readonly MusicService _music;
 
         //Counter for amount of loaded shards
-        private int loadedShards;
+        private int _loadedShards;
 
 
         public DiscordEventHandlerService(DiscordShardedClient client, CommandHandlerService commands, LavaNode node,
@@ -36,12 +37,12 @@ namespace Tsubasa.Services
         private async Task DiscordClientReadyAsync(DiscordSocketClient socketClient)
         {
             //Increment loaded shards
-            loadedShards++;
+            _loadedShards++;
 
             //If all shards are loaded
-            if (loadedShards == _client.Shards.Count)
+            if (_loadedShards == _client.Shards.Count)
             {
-                await Task.Delay(500);
+                await Task.Delay(500).ConfigureAwait(false);
 
                 //If the lavanode isn't connected, connect to it!
                 if (!_lavaNode.IsConnected)
@@ -53,7 +54,7 @@ namespace Tsubasa.Services
                 _lavaNode.OnTrackEnded += _music.OnTrackFinished;
 
                 //set loaded shards to 0
-                loadedShards = 0;
+                _loadedShards = 0;
             }
         }
 

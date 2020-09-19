@@ -4,28 +4,21 @@ using Discord;
 
 namespace Tsubasa
 {
-    internal class Logger
+    internal static class Logger
     {
-        public static ConsoleColor SeverityToConsoleColor(LogSeverity severity)
+        private static ConsoleColor SeverityToConsoleColor(LogSeverity severity)
         {
-            switch (severity)
+            return severity switch
             {
                 //Change the color of the console message based on the severity of the message
-                case LogSeverity.Critical:
-                    return ConsoleColor.Red;
-                case LogSeverity.Warning:
-                    return ConsoleColor.Yellow;
-                case LogSeverity.Debug:
-                    return ConsoleColor.Blue;
-                case LogSeverity.Error:
-                    return ConsoleColor.DarkRed;
-                case LogSeverity.Verbose:
-                    return ConsoleColor.Green;
-                case LogSeverity.Info:
-                    return ConsoleColor.Blue;
-                default:
-                    return ConsoleColor.White;
-            }
+                LogSeverity.Critical => ConsoleColor.Red,
+                LogSeverity.Warning => ConsoleColor.Yellow,
+                LogSeverity.Debug => ConsoleColor.Blue,
+                LogSeverity.Error => ConsoleColor.DarkRed,
+                LogSeverity.Verbose => ConsoleColor.Green,
+                LogSeverity.Info => ConsoleColor.Blue,
+                _ => ConsoleColor.White
+            };
         }
 
         internal static Task Log(LogMessage logMessage)

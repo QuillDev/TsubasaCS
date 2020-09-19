@@ -2,18 +2,19 @@
 using Discord;
 using Discord.WebSocket;
 
-namespace Tsubasa.Helper
+namespace Tsubasa.Services.Music_Services
 {
     //TODO Make this a service?
-    public class EmbedHelper
+    public class EmbedService
     {
 
-        private static DiscordShardedClient _client;
+        private readonly DiscordShardedClient _client;
 
-        public EmbedHelper(DiscordShardedClient client)
+        public EmbedService(DiscordShardedClient client)
         {
             _client = client;
         }
+        
         private enum EmbedMessageType
         {
             Success = 0,
@@ -23,7 +24,7 @@ namespace Tsubasa.Helper
             Basic = 1
         }
 
-        public static Embed CreateErrorEmbed(string title, string body)
+        public Embed CreateErrorEmbed(string title, string body)
         {
             //Create the embed builder
             var embed = new EmbedBuilder();
@@ -48,7 +49,7 @@ namespace Tsubasa.Helper
             return embed.Build();
         }
         
-        public static async Task<Embed> CreateBasicEmbedAsync(string title, string description, string footer)
+        public async Task<Embed> CreateBasicEmbedAsync(string title = null, string description = null, string footer = null)
         {
             
             //Create the embed using the given data

@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Discord.Commands;
 using Discord.WebSocket;
-using Tsubasa.Services;
+using Tsubasa.Services.Music_Services;
 
 namespace Tsubasa.Modules
 {
@@ -45,9 +45,9 @@ namespace Tsubasa.Modules
         }
 
         [Command("volume")]
-        public async Task Volume(int volume)
+        public async Task Volume(int percent)
         {
-            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, volume));
+            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, percent));
         }
 
         [Command("crank it")]
@@ -96,7 +96,7 @@ namespace Tsubasa.Modules
         [Command("Art")]
         public async Task Art()
         {
-            await ReplyAsync(embed: await _music.getTrackArt((SocketGuildUser) Context.User));
+            await ReplyAsync(embed: await _music.GetTrackArt((SocketGuildUser) Context.User));
         }
 
         [Command("Playing")]

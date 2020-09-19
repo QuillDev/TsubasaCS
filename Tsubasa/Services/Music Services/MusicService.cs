@@ -1,142 +1,167 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
-using Tsubasa.Helper;
-using Tsubasa.Helper.MusicSearch;
-using Tsubasa.Models;
 using Victoria;
 using Victoria.Enums;
 using Victoria.EventArgs;
-using Victoria.Responses.Rest;
 
-namespace Tsubasa.Services
+namespace Tsubasa.Services.Music_Services
 {
     //TODO This in places we can https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/async/start-multiple-async-tasks-and-process-them-as-they-complete
     //TODO Rework the rest of this file to the standard of PlayAsync()!
     public class MusicService
     {
         private readonly LavaNode _lavaNode;
+        private readonly TsubasaSearch _tsubasaSearch;
+        private readonly EmbedService _embedService;
 
-
-        private readonly Lazy<ConcurrentDictionary<ulong, MusicSettings>> _lazySettings =
-            new Lazy<ConcurrentDictionary<ulong, MusicSettings>>();
-
-        public MusicService(LavaNode lavaNode)
+        public MusicService(LavaNode lavaNode, TsubasaSearch tsubasaSearch, EmbedService embedService)
         {
             _lavaNode = lavaNode;
+            _tsubasaSearch = tsubasaSearch;
+            _embedService = embedService;
         }
-
-        private ConcurrentDictionary<ulong, MusicSettings> Options => _lazySettings.Value;
-
+        
+        /// <summary>
+        /// Joins the voice channel of the specified user if there are no conflicts
+        /// </summary>
+        /// <param name="user">A Socket Guild User to join the channel of</param>
+        /// <returns>An Embed that relays how the connection went</returns>
         public async Task<Embed> JoinAsync(SocketGuildUser user)
         {
+            //get the guild from the socket guild user
             IGuild guild = user.Guild;
-
+            
+            //if the voice channel is null tell the user they have to be in a voice channel
             if (user.VoiceChannel == null)
-                return await EmbedHelper.CreateBasicEmbed("Music Join", "You must be in a voice channel");
-
-            if (_lavaNode.HasPlayer(guild))
-                return await EmbedHelper.CreateBasicEmbed("Music, Join",
-                    "I can't join another voice channel until I'm disconnected.");
-
-            //Add this to the dictionary
-            Options.TryAdd(user.Guild.Id, new MusicSettings
             {
-                Master = user
-            });
+                return await _embedService.CreateBasicEmbedAsync("Music Join", "You must be in a voice channel");
+            }
+                
+            
+            //if the guild already has a player tell the user who requested it
+            if (_lavaNode.HasPlayer(guild))
+            {
+                return await _embedService.CreateBasicEmbedAsync("Music, Join",
+                    "I can't join another voice channel until I'm disconnected.");
+            }
+                
 
             await _lavaNode.JoinAsync(user.VoiceChannel);
-            
-            return await EmbedHelper.CreateBasicEmbed("Music Join", $"Joined {user.VoiceChannel}");
-        }
 
+            return await _embedService.CreateBasicEmbedAsync("Music Join", $"Joined {user.VoiceChannel}");
+        }
+        
+        /// <summary>
+        /// Gets songs for the given query then queues them for the bo to play
+        /// </summary>
+        /// <param name="user">The user who called the command</param>
+        /// <param name="query">The query to find matching songs for</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"> Exception explaining what went wrong</exception>
         public async Task<Embed> PlayAsync(SocketGuildUser user, string query = null)
         {
-            //TODO This needs a MAJOR Refactor. plz fix
-            //Get the guild off the user
-            IGuild guild = user.Guild;
-
-            //Check if the user is not in a voice channel
-            if (user.VoiceChannel == null)
-                return await EmbedHelper.CreateBasicEmbed("Music Play", "You must be in a channel first!");
-
-            //If the guild does not have a player, join the server when callig play.
-            if (!_lavaNode.HasPlayer(guild)) await JoinAsync(user);
-
-            //get the LavaPlayer for the guild the person is in
-            var player = _lavaNode.GetPlayer(guild);
-            
             try
             {
-                //TODO Add other sources (Twitch/etc..)
+                //TODO This needs a MAJOR Refactor. plz fix
+                //Get the guild off the user
+                IGuild guild = user.Guild;
+
+                //if the user is not in a voice channel, tell them to join one!
+                if (user.VoiceChannel == null)
+                {
+                    return await _embedService.CreateBasicEmbedAsync("Music Play", "You must be in a channel first!");
+                }
                 
-                //Search for the formatted song url
-                var urls = await TsubasaSearch.GetSongUrlAsync(query);
-                
-                //If the length of the url list is zero there was an error
-                if (urls.Count == 0)
-                    throw new Exception($"Url list came back empty for query {query}");
-                
-                //Search lavaplayer for tracks on all of the queries entered
-                var responses = urls.Select(url => _lavaNode.SearchAsync(url)).ToList();
-                
-                //await all responses
-                await Task.WhenAll(responses);
-                
-                //create a master track list to push all tracks to
+                //if the guild doesn't have a player, join the person who requested the bot's voice channel
+                if (!_lavaNode.HasPlayer(guild))
+                {
+                    await JoinAsync(user).ConfigureAwait(false);
+                }
+
+                //create list for holding tracks in
                 var masterTrackList = new List<LavaTrack>();
-                
-                //Iterate through responses TODO foreach?
-                foreach (var curResponse in from t in responses
-                    select t.Result
-                    into curResponse
-                    let resultStatus = curResponse.LoadStatus
-                    where resultStatus == LoadStatus.TrackLoaded || resultStatus == LoadStatus.PlaylistLoaded
-                    select curResponse)
+
+                //TODO Add other sources (Twitch/etc..)
+                //Search for the formatted song url
+                var urls = await _tsubasaSearch.GetSongUrlAsync(query);
+
+                //If the length of the url list was zero throw an Exception
+                if (urls.Count == 0)
                 {
-                    //Add the current tracks to the master list
-                    masterTrackList.AddRange(curResponse.Tracks);
+                    throw new Exception($"No matching results found for your query {query}");
                 }
                 
-                //if the masterTrackList is empty there was a serious problem, how about logging it!
-                if(masterTrackList.Count == 0)
-                    throw new Exception($"No tracks were able to load for query {query}");
-                
-                //Load tracks by iterating the masterTrackList
-                foreach(var track in masterTrackList)
+
+                //TODO this works but seems like SUPER SUPER slow
+                //Do our iteration 
+                while (urls.Any())
                 {
-                    //if the player is playing, add the track and continue
-                    if (player.PlayerState == PlayerState.Playing)
+                    //get a task when it's finished
+                    var finished = await Task.WhenAny(urls);
+                    urls.Remove(finished); //remove that task from the list
+
+                    //search the nodes for the result
+                    var response = await _lavaNode.SearchAsync(finished.Result);
+
+                    //if we don't have a valid load status, skip
+                    if (response.LoadStatus != LoadStatus.PlaylistLoaded &&
+                        response.LoadStatus != LoadStatus.TrackLoaded)
                     {
-                        player.Queue.Enqueue(track); 
                         continue;
-                    }
+                    } 
                     
-                    //check if the player has joined the channel
+                    //add to the master list for prettifying purposes
+                    await LoadTracksAsync(response.Tracks, guild);
                     
-                    //if the player is not playing then we can play the track
-                    await player.PlayAsync(track);
+                    //append to master track list
+                    masterTrackList.AddRange(response.Tracks);
                 }
-                
-                //if there was only one song in the master track list, put a cute message about us adding it
+
+                //if no sounds were found, throw an exception
+                if (masterTrackList.Count == 0) throw new Exception($"No tracks were loaded for query {query}");
+
+                //make sure we've joined
+                //TODO this is rlly rough find a better way mayb
+                await JoinAsync(user);
+
                 if (masterTrackList.Count == 1)
-                    return await EmbedHelper.CreateBasicEmbed("Track Loader",
-                        $"Added track {masterTrackList[0].Title} to the queue");
-                
-                //Otherwise, return an embed that shows the main track, and the amount of other tracks
-                return await EmbedHelper.CreateBasicEmbed("Track Loader",
-                    $"Added track {masterTrackList[0].Title} to the queue and {masterTrackList.Count - 1} others!");
+                    return await _embedService.CreateBasicEmbedAsync("Music Player",
+                        $"Loaded Song: {masterTrackList[0].Title}");
+
+                //if we're here we loaded more than 1 song
+                return await _embedService.CreateBasicEmbedAsync("Music Player",
+                    $"Loaded Song: {masterTrackList[0].Title} and {masterTrackList.Count - 1} others!");
             }
+
             catch (Exception e)
             {
                 Console.WriteLine(e.StackTrace);
-                return await EmbedHelper.CreateBasicEmbed("Music, Play Exception", $"An error occured when processing your query {query} it was likely invalid, or there was a networking issue on our side!");
+                return _embedService.CreateErrorEmbed("Player Error",
+                    $"Error: {e.Message}\n\nIf this looks like a bug, report it here!\nhttps://github.com/QuillDev/Tsubasa/issues");
+            }
+        }
+
+        private async Task LoadTracksAsync(IEnumerable<LavaTrack> tracks, IGuild guild)
+        {
+            //get the player from the guild
+            var player = _lavaNode.GetPlayer(guild);
+
+            //iterate through all tracks
+            foreach (var track in tracks)
+            {
+                if (player.PlayerState == PlayerState.Playing)
+                {
+                    player.Queue.Enqueue(track);
+                    continue;
+                }
+
+                //play track
+                await player.PlayAsync(track);
             }
         }
 
@@ -149,17 +174,17 @@ namespace Tsubasa.Services
             {
                 //Get the guild's player
                 var player = _lavaNode.GetPlayer(guild);
+
                 //if it's playing, stop playing
-                if (player.PlayerState == PlayerState.Playing)
-                    await player.StopAsync();
+                if (player.PlayerState == PlayerState.Playing) await player.StopAsync();
 
                 var channelname = player.VoiceChannel.Name;
                 await _lavaNode.LeaveAsync(user.VoiceChannel);
-                return await EmbedHelper.CreateBasicEmbed("Music", $"Disconnected from {channelname}.");
+                return await _embedService.CreateBasicEmbedAsync("Music", $"Disconnected from {channelname}.");
             }
             catch (InvalidOperationException e)
             {
-                return await EmbedHelper.CreateBasicEmbed("Leaving Music Channel", e.Message);
+                return await _embedService.CreateBasicEmbedAsync("Leaving Music Channel", e.Message);
             }
         }
 
@@ -174,13 +199,13 @@ namespace Tsubasa.Services
 
                 var player = _lavaNode.GetPlayer(user.Guild);
                 if (player == null)
-                    return await EmbedHelper.CreateBasicEmbed("Music Queue",
+                    return await _embedService.CreateBasicEmbedAsync("Music Queue",
                         "Could not aquire music player.\nAre you using the music service right now?");
 
                 if (player.PlayerState == PlayerState.Playing)
                 {
                     if (player.Queue.Count < 1 && player.Track != null)
-                        return await EmbedHelper.CreateBasicEmbed($"Now Playing: {player.Track.Title}",
+                        return await _embedService.CreateBasicEmbedAsync($"Now Playing: {player.Track.Title}",
                             "There are no other items in the queue.");
 
                     var trackNum = 2;
@@ -203,13 +228,13 @@ namespace Tsubasa.Services
                             break;
                         }
 
-                    return await EmbedHelper.CreateBasicEmbed("Music Playlist",
-                        $"Now Playing: [{player.Track.Title}]({player.Track.Url})\n{descriptionBuilder}");
+                    return await _embedService.CreateBasicEmbedAsync("Music Playlist",
+                        $"Now Playing: [{player.Track?.Title}]({player.Track?.Url})\n{descriptionBuilder}");
                 }
             }
             catch (Exception ex)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music, List", ex.Message);
+                return await _embedService.CreateBasicEmbedAsync("Music, List", ex.Message);
             }
 
             return null;
@@ -224,12 +249,12 @@ namespace Tsubasa.Services
 
                 //if the player doesn't exist, say that we could not acquire the player
                 if (player == null)
-                    return await EmbedHelper.CreateBasicEmbed("Music, List",
+                    return await _embedService.CreateBasicEmbedAsync("Music, List",
                         "Could not acquire player.\nAre you using the bot right now?");
                 if (player.Queue.Count == 0)
                 {
                     await player.StopAsync();
-                    return await EmbedHelper.CreateBasicEmbed("Music Skipping",
+                    return await _embedService.CreateBasicEmbedAsync("Music Skipping",
                         "There are no songs to skip to! stopping player.");
                 }
 
@@ -237,24 +262,34 @@ namespace Tsubasa.Services
                 {
                     var currentTrack = player.Track;
                     await player.SkipAsync();
-                    return await EmbedHelper.CreateBasicEmbed("Music Skip",
+                    return await _embedService.CreateBasicEmbedAsync("Music Skip",
                         $"Successfully skipped {currentTrack.Title}\nNow Playing{player.Track.Title}");
                 }
                 catch (Exception ex)
                 {
-                    return await EmbedHelper.CreateBasicEmbed("Music Skipping Exception:", ex.ToString());
+                    return await _embedService.CreateBasicEmbedAsync("Music Skipping Exception:", ex.ToString());
                 }
             }
             catch (Exception ex)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Skip", ex.ToString());
+                return await _embedService.CreateBasicEmbedAsync("Music Skip", ex.ToString());
             }
         }
-
+        
+        /// <summary>
+        /// Adjust the volume of the player 
+        /// </summary>
+        /// <param name="user">The user who requested the command</param>
+        /// <param name="volume">The volume to set the player to</param>
+        /// <returns>An embed containing information about the operation</returns>
         public async Task<Embed> VolumeAsync(SocketGuildUser user, int volume)
         {
+            //check if the volume is in bounds
             if (volume >= 150 || volume <= 0)
-                return await EmbedHelper.CreateBasicEmbed("Music Volume", "Volume must be between 1 and 149.");
+            {
+                return await _embedService.CreateBasicEmbedAsync("Music Volume", "Volume must be between 1 and 149.");
+            }
+                
             try
             {
                 //get the player 
@@ -262,13 +297,12 @@ namespace Tsubasa.Services
 
                 //update the volume
                 await player.UpdateVolumeAsync((ushort) volume);
-                //Ear Rape for fun
-                //await player.EqualizerAsync(new EqualizerBand(5, 1.0), new EqualizerBand(6, 1.0), new EqualizerBand(7, -.1), new EqualizerBand(8, 0), new EqualizerBand(9, 0), new EqualizerBand(10, 0), new EqualizerBand(11, 0),  new EqualizerBand(12, 0), new EqualizerBand(13, 0));
-                return await EmbedHelper.CreateBasicEmbed("🔊 Music Volume", $"Volume has been set to {volume}.");
+                
+                return await _embedService.CreateBasicEmbedAsync("🔊 Music Volume", $"Volume has been set to {volume}.");
             }
             catch (InvalidOperationException ex)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Volume", $"{ex.Message}",
+                return await _embedService.CreateBasicEmbedAsync("Music Volume", $"{ex.Message}",
                     "Please contact Stage in the support server if this is a recurring issue.");
             }
         }
@@ -281,16 +315,16 @@ namespace Tsubasa.Services
                 if (player.PlayerState == PlayerState.Paused)
                 {
                     await player.ResumeAsync();
-                    return await EmbedHelper.CreateBasicEmbed("▶️ Music",
+                    return await _embedService.CreateBasicEmbedAsync("▶️ Music",
                         $"**Resumed:** Now Playing {player.Track.Title}");
                 }
 
                 await player.PauseAsync();
-                return await EmbedHelper.CreateBasicEmbed("⏸️ Music", $"**Paused:** {player.Track.Title}");
+                return await _embedService.CreateBasicEmbedAsync("⏸️ Music", $"**Paused:** {player.Track.Title}");
             }
             catch (InvalidOperationException e)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Play/Pause", e.Message);
+                return await _embedService.CreateBasicEmbedAsync("Music Play/Pause", e.Message);
             }
         }
 
@@ -302,115 +336,155 @@ namespace Tsubasa.Services
 
             await player.SeekAsync(seekPoint);
 
-            return await EmbedHelper.CreateBasicEmbed("Music Seek", $"Skipped to {seekPoint.TotalMinutes}");
+            return await _embedService.CreateBasicEmbedAsync("Music Seek", $"Skipped to {seekPoint.TotalMinutes}");
         }
 
         public async Task<Embed> LoopTrack(SocketGuildUser user)
         {
             try
             {
-                //Get the option
-                Options.TryGetValue(user.Guild.Id, out var option);
-
-                //add or update values in the thing i guess fuck
-                Options.TryUpdate(user.Guild.Id, new MusicSettings
-                {
-                    RepeatTrack = !option.RepeatTrack
-                }, option);
-
-                return await EmbedHelper.CreateBasicEmbed("Music Loop", $"Looping set to {!option.RepeatTrack}");
+                throw new Exception($"Removing because of issues, will reimplement later {user.Username}");
             }
             catch (Exception exception)
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Loop",
+                return await _embedService.CreateBasicEmbedAsync("Music Loop",
                     $"The dev fucked up. idk what this error even is{exception.Message}");
             }
         }
-
+        
+        /// <summary>
+        /// Get the art of the track that is currently playing 
+        /// </summary>
+        /// <param name="user">The user who executed the command</param>
+        /// <returns>An embed containing the art</returns>
         public async Task<Embed> GetTrackArt(SocketGuildUser user)
         {
+            //get the guild
+            IGuild guild = user.Guild;
+            
+            //if the guild doesn't have a player
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                return await _embedService.CreateBasicEmbedAsync("Music Artwork", "The guild does not have a player.");
+            }
+            
+            //get the player for the current guild
             var player = _lavaNode.GetPlayer(user.Guild);
-
+            
+            //if the bot is not playing anything say no songs are playing 
             if (player.PlayerState != PlayerState.Playing)
-                return await EmbedHelper.CreateBasicEmbed("Music Artwork", "No songs playing");
-
+            {
+                return await _embedService.CreateBasicEmbedAsync("Music Artwork", "No songs playing.");
+            }
+            
             try
             {
                 //get the track
                 var track = player.Track;
                 var artwork = await track.FetchArtworkAsync(); //get the artwork for the track
-
+                
                 //create embed builder
-                var builder = new EmbedBuilder();
-                builder.ImageUrl = artwork;
-                builder.Author = new EmbedAuthorBuilder
+                var builder = new EmbedBuilder
                 {
-                    Name = $"{track.Title} - {track.Author}",
-                    IconUrl = artwork
+                    ImageUrl = artwork,
+                    Author = new EmbedAuthorBuilder {Name = $"{track.Title} - {track.Author}", IconUrl = artwork}
                 };
+                
+                //add the current timestamp to the builder
                 builder.WithCurrentTimestamp();
+                
                 return builder.Build();
             }
             catch
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Artwork",
+                return await _embedService.CreateBasicEmbedAsync("Music Artwork",
                     "Exception occured while trying to retrieve artwork");
             }
         }
-
+        
+        /// <summary>
+        /// Get the song that is currently playing and print an embed based on it
+        /// </summary>
+        /// <param name="user">The user who requested the operation</param>
+        /// <returns>An embed based on what happened in the operation</returns>
         public async Task<Embed> Playing(SocketGuildUser user)
         {
+            //get the guild
+            IGuild guild = user.Guild;
+            
+            //check if the guild has a player
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                return await _embedService.CreateBasicEmbedAsync("Playing",
+                    "The guild does not currently have a player");
+            }
+            
+            //get the player
             var player = _lavaNode.GetPlayer(user.Guild);
-
+            
+            //if the guild isn't playing anything return an embed that lets them know that 
             if (player.PlayerState != PlayerState.Playing)
-                return await EmbedHelper.CreateBasicEmbed("Music Artwork", "No songs playing");
-
+            {
+                return await _embedService.CreateBasicEmbedAsync("Music Artwork", "No songs playing");
+            }
+            
             try
             {
                 //get the track
                 var track = player.Track;
                 var artwork = await track.FetchArtworkAsync(); //get the artwork for the track
-
                 //get runtime in seconds
                 var progress = track.Position.Divide(track.Duration);
+                
+                //TODO calculate ticks based on resolution of the image
                 var ticks = 54;
                 var position = (int) (progress * ticks);
 
-                //Output the 
+                //Create an output string using the string builder
                 var output = new StringBuilder();
                 for (var index = 0; index < ticks; index++) output.Append(index == position ? ":blue_circle:" : "-");
+                
                 //create embed builder
-                var builder = new EmbedBuilder();
-                builder.ImageUrl = artwork;
-                builder.Author = new EmbedAuthorBuilder
+                var builder = new EmbedBuilder
                 {
-                    Name = $"{track.Title} - {track.Author}",
-                    IconUrl = artwork
+                    ImageUrl = artwork,
+                    Author = new EmbedAuthorBuilder {Name = $"{track.Title} - {track.Author}", IconUrl = artwork}
                 };
+                
                 builder.WithCurrentTimestamp();
                 builder.Description = output.ToString();
                 return builder.Build();
             }
             catch
             {
-                return await EmbedHelper.CreateBasicEmbed("Music Artwork",
+                return await _embedService.CreateBasicEmbedAsync("Music Artwork",
                     "Exception occured while trying to retrieve artwork");
             }
         }
-
+        
+        /// <summary>
+        /// Method that tries to grab the lyrics for the song that is currently playing
+        /// </summary>
+        /// <param name="user">User who called the lyrics method</param>
+        /// <returns>An embed with either the lyrics or any errors that occured while retrieving them</returns>
         public async Task<Embed> Lyrics(SocketGuildUser user)
         {
             //if the player is not in that guild, let em know
             if (!_lavaNode.HasPlayer(user.Guild))
-                return await EmbedHelper.CreateBasicEmbed("Lyrics", "No player in guild");
-
+            {
+                return await _embedService.CreateBasicEmbedAsync("Lyrics", "No player in guild");
+            }
+            
             //Get the player and the track
             var player = _lavaNode.GetPlayer(user.Guild);
             var track = player.Track;
 
             //If there is no song playing, tell em
             if (player.PlayerState != PlayerState.Playing)
-                return await EmbedHelper.CreateBasicEmbed("Lyrics", "No song is playing.");
+            {
+                return await _embedService.CreateBasicEmbedAsync("Lyrics", "No song is playing.");
+            }
+                
 
             try
             {
@@ -430,21 +504,27 @@ namespace Tsubasa.Services
 
                 //Create embed builder for lyrics
                 var embedBuilder = new EmbedBuilder();
-                
+
                 //if the lyrics are longer than discord supports return an embed saying that 
                 if (lyrics.Length >= 6000)
-                    return await EmbedHelper.CreateBasicEmbed("Lyrics", "Lyrics are too long to post, blame discord.");
-                
+                {
+                    return await _embedService.CreateBasicEmbedAsync("Lyrics", "Lyrics are too long to post, blame discord.");
+                }
+                    
+
                 //Calculate iterations as the lyrics length / 1000
                 var iterations = (int) Math.Ceiling(lyrics.Length / 1000.0); //TODO change unit to 1024? need more testing
                 
                 //Iterate through the iterations and split the embed up
                 for (var index = 0; index < iterations; index++)
+                {
                     //Add the section
                     embedBuilder.AddField($"Section {index + 1}",
                         index == iterations - 1
                             ? lyrics.Substring(index * 1024)
                             : lyrics.Substring(index * 1024, 1024));
+                }
+
 
                 //add the author to the embed
                 embedBuilder.Author = new EmbedAuthorBuilder
@@ -458,17 +538,20 @@ namespace Tsubasa.Services
 
                 //Build the embed
                 return embedBuilder.Build();
-
             }
             catch (Exception exception)
             {
-                Console.WriteLine(exception.StackTrace);
-                return await EmbedHelper.CreateBasicEmbed("lyrics",
+                return await _embedService.CreateBasicEmbedAsync("lyrics",
                     "Failed to retrieve lyrics by either an error, or the source doesn't have any\n" +
                     exception.Message);
             }
         }
-
+        
+        /// <summary>
+        /// Catches the event when a track ends
+        /// </summary>
+        /// <param name="args">things that happen on track ending</param>
+        /// <returns>A task after the event ends</returns>
         public async Task OnTrackFinished(TrackEndedEventArgs args)
         {
             var reason = args.Reason;
@@ -476,28 +559,26 @@ namespace Tsubasa.Services
             var track = args.Track;
 
             if (!reason.ShouldPlayNext())
-                return;
-
-            //Get the option
-            Options.TryGetValue(player.VoiceChannel.Guild.Id, out var option);
-
-            if (option != null && option.RepeatTrack)
-            {
-                //Play the track again
-                await player.PlayAsync(track);
+            { 
                 return;
             }
-            
+
             //TODO check if this broke OnTrackFinished
-            if (!player.Queue.TryDequeue(out var item) || !(item is { } nextTrack))
+            if (!player.Queue.TryDequeue(out
+                var item) || !(item is {}
+                nextTrack))
             {
                 //Make sure the text channel exists
                 if (player.TextChannel != null)
+                {
                     //Say there are no more songs in the queue
                     await player.TextChannel?.SendMessageAsync("There are no more songs left in queue. Disconnecting");
-                
+                }
+                    
+
                 //Leave the voice channel without using leave async
                 await _lavaNode.LeaveAsync(player.VoiceChannel);
+                
                 return;
             }
 
