@@ -4,9 +4,17 @@ using Discord.WebSocket;
 
 namespace Tsubasa.Helper
 {
-    public static class EmbedHelper
+    //TODO Make this a service?
+    public class EmbedHelper
     {
-        public enum EmbedMessageType
+
+        private static DiscordShardedClient _client;
+
+        public EmbedHelper(DiscordShardedClient client)
+        {
+            _client = client;
+        }
+        private enum EmbedMessageType
         {
             Success = 0,
             Info = 10,
@@ -15,18 +23,18 @@ namespace Tsubasa.Helper
             Basic = 1
         }
 
-        public static Embed CreateEmbed(string title, string body, EmbedMessageType type, SocketUser target)
+        public static Embed CreateErrorEmbed(string title, string body)
         {
             //Create the embed builder
             var embed = new EmbedBuilder();
 
             //get the users avatar url
-            var thumbnailUrl = target.GetAvatarUrl();
+            var thumbnailUrl = _client.CurrentUser.GetAvatarUrl();
 
-            //Build the author ofhte embed
+            //Build the author of the embed
             var author = new EmbedAuthorBuilder
             {
-                Name = target.Username,
+                Name = _client.CurrentUser.Username,
                 IconUrl = thumbnailUrl
             };
 
@@ -34,15 +42,15 @@ namespace Tsubasa.Helper
             embed.WithAuthor(author);
             embed.WithTitle(title);
             embed.WithDescription(body);
-            embed.WithColor(GetEmbedColor(type));
+            embed.WithColor(GetEmbedColor(EmbedMessageType.Error));
             embed.WithCurrentTimestamp();
 
             return embed.Build();
         }
-
-        public static async Task<Embed> CreateBasicEmbed(string title = null, string description = null,
-            string footer = null)
+        
+        public static async Task<Embed> CreateBasicEmbedAsync(string title, string description, string footer)
         {
+            
             //Create the embed using the given data
             var embed = await Task.Run(() => new EmbedBuilder()
                 .WithTitle(title)
