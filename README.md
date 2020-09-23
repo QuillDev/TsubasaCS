@@ -1,7 +1,8 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e35fd4ba559d4ce4a31762c1b36345c7)](https://app.codacy.com/manual/QuillDev/Tsubasa?utm_source=github.com&utm_medium=referral&utm_content=QuillDev/Tsubasa&utm_campaign=Badge_Grade_Settings)
-![Travis Badge](https://travis-ci.org/QuillDev/Tsubasa.svg?branch=master)
 <!-- Shield URLs -->
 <p align="center">
+    <img src="https://api.codacy.com/project/badge/Grade/e35fd4ba559d4ce4a31762c1b36345c7" />
+    <img src="https://travis-ci.org/QuillDev/Tsubasa.svg?branch=master" />
+    <br>
     <a href="https://discord.com/api/oauth2/authorize?client_id=753764233484828703&permissions=0&scope=bot">
     Click Here to add Tsubasa to your server
     </a>
