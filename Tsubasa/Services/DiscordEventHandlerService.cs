@@ -44,11 +44,13 @@ namespace Tsubasa.Services
             {
                 await Task.Delay(500).ConfigureAwait(false);
 
-                //If the lavanode isn't connected, connect to it!
+                //If the lava node isn't connected, connect to it!
                 if (!_lavaNode.IsConnected)
-                    //Connect to the lavanode
+                {
+                    //Connect to the lava node
                     await _lavaNode.ConnectAsync();
-
+                }
+                
                 //Add lava node to logger and add on track ended event to music on track ended
                 _lavaNode.OnLog += Logger.Log;
                 _lavaNode.OnTrackEnded += _music.OnTrackFinished;

@@ -29,7 +29,6 @@ namespace Tsubasa
                 $"[{DateTime.Now.ToLongTimeString()} | Source: {logMessage.Source}] Message: {logMessage.Message}";
             Console.WriteLine(message);
             Console.ResetColor();
-
             return Task.CompletedTask;
         }
     }

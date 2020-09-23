@@ -63,7 +63,7 @@ namespace Tsubasa.Services.Music_Services
         /// <param name="query">The query to find matching songs for</param>
         /// <returns></returns>
         /// <exception cref="Exception"> Exception explaining what went wrong</exception>
-        public async Task<Embed> PlayAsync(SocketGuildUser user, string query = null)
+        public async Task<Embed> PlayAsync(SocketGuildUser user, string query)
         {
             try
             {
@@ -109,7 +109,7 @@ namespace Tsubasa.Services.Music_Services
                     } 
                     
                     //add to the master list for prettifying purposes
-                    await LoadTracksAsync(response.Tracks, guild);
+                    await LoadTracksAsync(response.Tracks, guild).ConfigureAwait(false);
                     
                     //append to master track list
                     masterTrackList.AddRange(response.Tracks);
@@ -124,12 +124,15 @@ namespace Tsubasa.Services.Music_Services
 
                 //make sure we've joined
                 //TODO this is rlly rough find a better way mayb
-                await JoinAsync(user);
-
+                await JoinAsync(user).ConfigureAwait(false);
+                
+                //if there is only one song in the master track list give a different message saying so
                 if (masterTrackList.Count == 1)
+                {
                     return await _embedService.CreateBasicEmbedAsync("Music Player",
                         $"Loaded Song: {masterTrackList[0].Title}");
-
+                }
+                
                 //if we're here we loaded more than 1 song
                 return await _embedService.CreateBasicEmbedAsync("Music Player",
                     $"Loaded Song: {masterTrackList[0].Title} and {masterTrackList.Count - 1} others!");
@@ -173,7 +176,10 @@ namespace Tsubasa.Services.Music_Services
                 var player = _lavaNode.GetPlayer(guild);
 
                 //if it's playing, stop playing
-                if (player.PlayerState == PlayerState.Playing) await player.StopAsync();
+                if (player.PlayerState == PlayerState.Playing)
+                {
+                    await player.StopAsync();
+                }
 
                 var channelName = player.VoiceChannel.Name;
                 await _lavaNode.LeaveAsync(user.VoiceChannel);
@@ -196,17 +202,27 @@ namespace Tsubasa.Services.Music_Services
 
                 var player = _lavaNode.GetPlayer(user.Guild);
                 if (player == null)
+                {
                     return await _embedService.CreateBasicEmbedAsync("Music Queue",
                         "Could not aquire music player.\nAre you using the music service right now?");
-
+                }
+                    
+                
+                //if the player is playing
                 if (player.PlayerState == PlayerState.Playing)
                 {
+                    //if the queue count is less than one and the track is not equal to null give a now playing message
                     if (player.Queue.Count < 1 && player.Track != null)
+                    {
                         return await _embedService.CreateBasicEmbedAsync($"Now Playing: {player.Track.Title}",
                             "There are no other items in the queue.");
+                    }
+                        
 
                     var trackNum = 2;
                     foreach (var track in player.Queue)
+                    {
+                        //if there are two tracks
                         if (trackNum == 2)
                         {
                             descriptionBuilder.Append($"Up Next: [{track.Title}]({track.Url})\n");
@@ -224,6 +240,8 @@ namespace Tsubasa.Services.Music_Services
                             descriptionBuilder.Append($"And {player.Queue.Count - maxTracks} others.");
                             break;
                         }
+                    }
+
 
                     return await _embedService.CreateBasicEmbedAsync("Music Playlist",
                         $"Now Playing: [{player.Track?.Title}]({player.Track?.Url})\n{descriptionBuilder}");
@@ -251,7 +269,7 @@ namespace Tsubasa.Services.Music_Services
                 if (player.Queue.Count == 0)
                 {
                     //Leave if the queue count is zero
-                    await LeaveAsync(user);
+                    await LeaveAsync(user).ConfigureAwait(false);
                     return await _embedService.CreateBasicEmbedAsync("Music Skipping",
                         "There are no songs to skip to! stopping player.");
                 }
@@ -438,7 +456,12 @@ namespace Tsubasa.Services.Music_Services
 
                 //Create an output string using the string builder
                 var output = new StringBuilder();
-                for (var index = 0; index < ticks; index++) output.Append(index == position ? ":blue_circle:" : "-");
+                
+                //iterate through each index in the ticks
+                for (var index = 0; index < ticks; index++)
+                {
+                    output.Append(index == position ? ":blue_circle:" : "-");
+                }
                 
                 //create embed builder
                 var builder = new EmbedBuilder

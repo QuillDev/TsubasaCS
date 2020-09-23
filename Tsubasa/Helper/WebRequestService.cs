@@ -14,12 +14,11 @@ namespace Tsubasa.Helper
         /// <param name="url">the url to pull json data from</param>
         /// <param name="headers">headers to add to the request as a web header collection</param>
         /// <returns>JSON formatted data from that URL in the form of a JObject</returns>
-        public async Task<JArray> RequestJsonAsync(string url, WebHeaderCollection headers = null)
+        public async Task<JArray> RequestJsonAsync(string url)
         {
             //Create the web request using the URL
             var request = (HttpWebRequest) WebRequest.Create(url);
             request.Method = "GET"; //set the request method to get
-            request.Headers = headers ?? new WebHeaderCollection();
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             string content;
             var response = await request.GetResponseAsync();
@@ -40,12 +39,11 @@ namespace Tsubasa.Helper
         /// <param name="url">the url to pull json data from</param>
         /// <param name="headers">headers to add to the request as a webheader collection</param>
         /// <returns>JSON formatted data from that URL in the form of a JObject</returns>
-        public async Task<string> RequestRawAsync(string url, WebHeaderCollection headers = null)
+        public async Task<string> RequestRawAsync(string url)
         {
             //Create the web request using the URL
             var request = (HttpWebRequest) WebRequest.Create(url);
             request.Method = "GET"; //set the request method to get
-            request.Headers = headers ?? new WebHeaderCollection();
             request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
             
             //Get async response from request

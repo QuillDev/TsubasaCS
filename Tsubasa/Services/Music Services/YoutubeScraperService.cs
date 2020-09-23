@@ -26,7 +26,7 @@ namespace Tsubasa.Services.Music_Services
         /// <param name="page">THe page of responses to check</param>
         /// <returns>A string that has the first result from that page</returns>
         /// <exception cref="Exception">Throws exception if data is empty</exception>
-        public async Task<string> ScrapeResultPageAsync(string query, int page = 1)
+        public async Task<string> ScrapeResultPageAsync(string query, int page)
         {
             //create the url using the query and the page number
             var url = @$"https://www.youtube.com/results?q={query}&page={page}";
@@ -45,16 +45,9 @@ namespace Tsubasa.Services.Music_Services
 
             //Get sectionLists
             var sectionLists =
-                JArray.Parse(json["contents"]?["twoColumnSearchResultsRenderer"]?["primaryContents"]?[
+                JArray.Parse(((json["contents"]?["twoColumnSearchResultsRenderer"]?["primaryContents"]?[
                         "sectionListRenderer"]?["contents"]
-                    ?.ToString() ?? throw new Exception("Something broke while parsing sectionLists")).ToList();
-
-            //if sectionLists are null, throw an error
-            if (sectionLists == null)
-            {
-                throw new Exception("Section lists were null");
-            }
-                
+                    ?.ToString() ?? "")));
 
             //filter list to only include sections where the itemSelectionRenderer is found
             var filteredList = sectionLists.Where(x => HasProperty(x, "itemSectionRenderer"));
@@ -63,56 +56,42 @@ namespace Tsubasa.Services.Music_Services
             var enumerable = filteredList as JToken[] ?? filteredList.ToArray();
 
             //Iterate through the filtered list
-            foreach (var item in enumerable)
-            {
-                //get content from the itemSelectionRenderer
-                var contents = item["itemSectionRenderer"]?["contents"];
-
-                //if content was null, throw an exception
-                if (contents == null)
-                {
-                    throw new Exception("Content was null");
-                }
-                    
-
-                //iterate through content
-                foreach (var content in contents)
-                {
-                    if (!HasProperty(content, "videoRenderer"))
-                    {
-                        continue;
-                    }
-
-                    //if the content was good, return it
-                    var video = ParseVideoRendererAsync(content["videoRenderer"]).Result;
-
-                    //if the url is valid, return it 
-                    if (!string.IsNullOrEmpty(video))
-                    {
-                        return video;
-                    }
-                    
-                }
-            }
-
-            return null;
+            return (from item in enumerable
+                    select item["itemSectionRenderer"]?["contents"]
+                    into contents
+                    where contents != null
+                    from content in contents
+                    where HasProperty(content, "videoRenderer")
+                    select ParseVideoRendererAsync(content["videoRenderer"]).Result)
+                .FirstOrDefault(video => !string.IsNullOrEmpty(video));
         }
-
+        
+        /// <summary>
+        /// Scrape result page asyncronously
+        /// </summary>
+        /// <param name="query">the query to check with</param>
+        /// <returns>a string of results</returns>
+        public async Task<string> ScrapeResultPageAsync(string query)
+        {
+            return await ScrapeResultPageAsync(query, 1).ConfigureAwait(false);
+        }
         private async Task<string> ParseVideoRendererAsync(JToken obj)
         {
             var video = await Task.Run(() =>
             {
                 //Return an empty video if the object is null
-                if (obj == null) return null;
+                if (obj == null)
+                {
+                    return null;
+                }
 
                 //use conditional access to get the title and url of the video
                 var url =
-                    $"https://www.youtube.com{obj["navigationEndpoint"]?["commandMetadata"]?["webCommandMetadata"]?["url"]}"
-                        .ToString();
+                    $"https://www.youtube.com{obj["navigationEndpoint"]?["commandMetadata"]?["webCommandMetadata"]?["url"]}";
 
                 //return the youtube video
                 return url;
-            });
+            }).ConfigureAwait(false);
 
             return video;
         }

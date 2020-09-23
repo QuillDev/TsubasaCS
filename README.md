@@ -11,4 +11,4 @@
 </p>
 
 ## Tsubasa - つばさ
-##### A multi-purpose discord bot written in C# using Discord.NET
+### A multi-purpose discord bot written in C# using Discord.NET

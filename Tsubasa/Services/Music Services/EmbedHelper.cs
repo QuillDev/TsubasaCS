@@ -49,7 +49,7 @@ namespace Tsubasa.Services.Music_Services
             return embed.Build();
         }
         
-        public async Task<Embed> CreateBasicEmbedAsync(string title = null, string description = null, string footer = null)
+        public async Task<Embed> CreateBasicEmbedAsync(string title, string description, string footer)
         {
             
             //Create the embed using the given data
@@ -64,7 +64,17 @@ namespace Tsubasa.Services.Music_Services
 
             return embed;
         }
-
+        //overload for main method
+        public async Task<Embed> CreateBasicEmbedAsync(string title, string description)
+        {
+            return await CreateBasicEmbedAsync(title, description, null);
+        }
+        
+        /// <summary>
+        /// Get embed color depending on the enum used
+        /// </summary>
+        /// <param name="type">The EmbedMessageType to use</param>
+        /// <returns>return the color corresponding to the message type</returns>
         private static Color GetEmbedColor(EmbedMessageType type)
         {
             //determine embed color based on the embed type
