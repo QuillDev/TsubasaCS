@@ -5,6 +5,13 @@
 #### Tsubasa is a module-based discord bot written in C# and solely maintained by it's founding developer "QuillDev" the goal of Tsubasa is to be a "everything but the kitchen sink" bot that can complete most tasks servers would want from it.
 
 # Features
+
+## General
+General commands for working with the bot.
+
+#### Command-List
+Help - Gives a link to this website that has more info on the bots commands.
+
 ## Music
 Plays tracks from youtube, Spotify, and Soundcloud.
 
