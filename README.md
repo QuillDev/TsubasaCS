@@ -11,4 +11,7 @@
 </p>
 
 ## Tsubasa - つばさ
+
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/e35fd4ba559d4ce4a31762c1b36345c7)](https://app.codacy.com/manual/QuillDev/Tsubasa?utm_source=github.com&utm_medium=referral&utm_content=QuillDev/Tsubasa&utm_campaign=Badge_Grade_Settings)
+
 ### A multi-purpose discord bot written in C# using Discord.NET
