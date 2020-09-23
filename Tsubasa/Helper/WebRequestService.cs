@@ -14,7 +14,7 @@ namespace Tsubasa.Helper
         /// <param name="url">the url to pull json data from</param>
         /// <param name="headers">headers to add to the request as a web header collection</param>
         /// <returns>JSON formatted data from that URL in the form of a JObject</returns>
-        public async Task<JObject> RequestJsonAsync(string url, WebHeaderCollection headers = null)
+        public async Task<JArray> RequestJsonAsync(string url, WebHeaderCollection headers = null)
         {
             //Create the web request using the URL
             var request = (HttpWebRequest) WebRequest.Create(url);
@@ -31,7 +31,7 @@ namespace Tsubasa.Helper
                 }
             }
 
-            return JObject.Parse(content);
+            return JArray.Parse(content);
         }
 
         /// <summary>

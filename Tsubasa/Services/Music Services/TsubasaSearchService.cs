@@ -35,13 +35,12 @@ namespace Tsubasa.Services.Music_Services
         {
             var trackTasks = new List<Task<string>>();
             //Checks if it's a legit soundcloud url
-            if (query.Contains("soundcloud.com"))
+            if (query.Contains("soundcloud.com") || query.Contains("twitch.tv"))
             {
                 //add the query and return
                 trackTasks.Add(Task.FromResult(query));
                 return trackTasks;
             }
-
             //if it's a youtube playlist get the videos id
             if (query.Contains("?list=") || query.Contains("&list="))
             {
@@ -67,13 +66,6 @@ namespace Tsubasa.Services.Music_Services
                 if (id.Contains("?si="))
                 {
                     id = id.Split("?si=")[0];
-                }
-                    
-
-                //check if the string is null or empty after parsing
-                if (string.IsNullOrEmpty(id))
-                {
-                    throw new Exception("Given id from string was invalid.");
                 }
                 
                 //add the track tasks from the spotify search to the trackTasks list

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -29,8 +28,8 @@ namespace Tsubasa.Services.AnimeServices
         /// <returns>the URL of a hentai image for the given query</returns>
         public async Task<string> GetRandomHentaiAsync(string query)
         {
-            var tag = await GetMostPopularTagAsync(query);
-            return await GetRandomHentaiWithTagAsync(tag);
+            var tag = await GetMostPopularTagAsync(query).ConfigureAwait(false);
+            return await GetRandomHentaiWithTagAsync(tag).ConfigureAwait(false);
         }
         /// <summary>
         /// Get random hentai from the given tag
@@ -57,7 +56,7 @@ namespace Tsubasa.Services.AnimeServices
         public async Task<string> GetMostPopularTagAsync(string query)
         {
             //create list of tags as JTokens
-            var tags = await GetTagsAsync(query);
+            var tags = await GetTagsAsync(query).ConfigureAwait(false);
             
             //if the tags have a count of zero return null
             if (tags.Count == 0)

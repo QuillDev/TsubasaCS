@@ -106,7 +106,6 @@ namespace Tsubasa.Services.Music_Services
                 if (obj == null) return null;
 
                 //use conditional access to get the title and url of the video
-                //var title = obj["title"]?["runs"]?[0]?["text"]?.ToString();
                 var url =
                     $"https://www.youtube.com{obj["navigationEndpoint"]?["commandMetadata"]?["webCommandMetadata"]?["url"]}"
                         .ToString();

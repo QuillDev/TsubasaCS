@@ -11,6 +11,7 @@ using SpotifyAPI.Web;
 using Tsubasa.Helper;
 using Tsubasa.Models;
 using Tsubasa.Services;
+using Tsubasa.Services.AnimeServices;
 using Tsubasa.Services.Music_Services;
 using Victoria;
 
@@ -21,7 +22,7 @@ namespace Tsubasa
         //TODO Documentation for all the methods I made today @9/14/2020
         private const string ConfigPath = "config.toml";
         private static BotSettings _config;
-        private static SpotifyClient _spotifyClient;
+        private SpotifyClient _spotifyClient;
 
         //Declare member vars for service and config
         private IServiceProvider _services;
@@ -42,7 +43,7 @@ namespace Tsubasa
         private async Task StartAsync()
         {
             //Create the spotify client
-            _spotifyClient = await AuthenticateSpotifyAsync();
+            _spotifyClient = await AuthenticateSpotifyAsync().ConfigureAwait(false);
 
             //Build services
             _services = BuildServices();
@@ -68,6 +69,7 @@ namespace Tsubasa
         {
             //TODO Add any new services we add here
             return new ServiceCollection()
+                //Add general discord related services
                 .AddSingleton(new DiscordShardedClient(_config.DiscordSettings.ShardIds, new DiscordSocketConfig
                 {
                     AlwaysDownloadUsers = true,
@@ -75,22 +77,29 @@ namespace Tsubasa
                     MessageCacheSize = 100,
                     TotalShards = _config.DiscordSettings.ShardIds.Length
                 }))
-                //Add services
                 .AddSingleton<CommandService>()
                 .AddSingleton<CommandHandlerService>()
                 .AddSingleton<DiscordEventHandlerService>()
+                
+                //Add Music related services
                 .AddSingleton<MusicService>()
                 .AddSingleton<TsubasaSearch>()
                 .AddSingleton(_spotifyClient)
                 .AddSingleton<SpotifyService>()
                 .AddSingleton<TsubasaSearch>()
-                .AddSingleton<EmbedService>()
                 .AddSingleton<YoutubeScraperService>()
-                .AddSingleton<WebRequestService>()
-                //Misc
                 .AddLavaNode(x =>
                     x.SelfDeaf = false
                 )
+                
+                //Add anime related services
+                .AddSingleton<DanbooruSearchService>()
+                .AddSingleton<HentaiService>()
+                
+                //add general utility services
+                .AddSingleton<WebRequestService>()
+                .AddSingleton<EmbedService>()
+
                 .BuildServiceProvider();
         }
 

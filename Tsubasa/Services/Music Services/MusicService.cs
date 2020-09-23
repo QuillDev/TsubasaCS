@@ -89,14 +89,7 @@ namespace Tsubasa.Services.Music_Services
                 //TODO Add other sources (Twitch/etc..)
                 //Search for the formatted song url
                 var urls = await _tsubasaSearch.GetSongUrlAsync(query);
-
-                //If the length of the url list was zero throw an Exception
-                if (urls.Count == 0)
-                {
-                    throw new Exception($"No matching results found for your query {query}");
-                }
                 
-
                 //TODO this works but seems like SUPER SUPER slow
                 //Do our iteration 
                 while (urls.Any())
@@ -122,8 +115,12 @@ namespace Tsubasa.Services.Music_Services
                     masterTrackList.AddRange(response.Tracks);
                 }
 
-                //if no sounds were found, throw an exception
-                if (masterTrackList.Count == 0) throw new Exception($"No tracks were loaded for query {query}");
+                //if no sounds were found, tell the user
+                if (masterTrackList.Count == 0)
+                {
+                    return await _embedService.CreateBasicEmbedAsync("Music Player",
+                        $"Couldn't load songs for the given query {query}.");
+                }
 
                 //make sure we've joined
                 //TODO this is rlly rough find a better way mayb
@@ -140,7 +137,6 @@ namespace Tsubasa.Services.Music_Services
 
             catch (Exception e)
             {
-                Console.WriteLine(e.StackTrace);
                 return _embedService.CreateErrorEmbed("Player Error",
                     $"Error: {e.Message}\n\nIf this looks like a bug, report it here!\nhttps://github.com/QuillDev/Tsubasa/issues");
             }
@@ -154,6 +150,7 @@ namespace Tsubasa.Services.Music_Services
             //iterate through all tracks
             foreach (var track in tracks)
             {
+                //if the player is playing
                 if (player.PlayerState == PlayerState.Playing)
                 {
                     player.Queue.Enqueue(track);
@@ -178,9 +175,9 @@ namespace Tsubasa.Services.Music_Services
                 //if it's playing, stop playing
                 if (player.PlayerState == PlayerState.Playing) await player.StopAsync();
 
-                var channelname = player.VoiceChannel.Name;
+                var channelName = player.VoiceChannel.Name;
                 await _lavaNode.LeaveAsync(user.VoiceChannel);
-                return await _embedService.CreateBasicEmbedAsync("Music", $"Disconnected from {channelname}.");
+                return await _embedService.CreateBasicEmbedAsync("Music", $"Disconnected from {channelName}.");
             }
             catch (InvalidOperationException e)
             {
@@ -253,7 +250,8 @@ namespace Tsubasa.Services.Music_Services
                         "Could not acquire player.\nAre you using the bot right now?");
                 if (player.Queue.Count == 0)
                 {
-                    await player.StopAsync();
+                    //Leave if the queue count is zero
+                    await LeaveAsync(user);
                     return await _embedService.CreateBasicEmbedAsync("Music Skipping",
                         "There are no songs to skip to! stopping player.");
                 }
@@ -338,19 +336,17 @@ namespace Tsubasa.Services.Music_Services
 
             return await _embedService.CreateBasicEmbedAsync("Music Seek", $"Skipped to {seekPoint.TotalMinutes}");
         }
-
+        
+        /// <summary>
+        /// Loops the current track
+        /// </summary>
+        /// <param name="user">SocketGuildUser who issued this command</param>
+        /// <returns></returns>
         public async Task<Embed> LoopTrack(SocketGuildUser user)
         {
-            try
-            {
-                throw new Exception($"Removing because of issues, will reimplement later {user.Username}");
+            return await _embedService.CreateBasicEmbedAsync("Music Loop",
+                    $"This feature has been removed and will be re-added at a later date");
             }
-            catch (Exception exception)
-            {
-                return await _embedService.CreateBasicEmbedAsync("Music Loop",
-                    $"The dev fucked up. idk what this error even is{exception.Message}");
-            }
-        }
         
         /// <summary>
         /// Get the art of the track that is currently playing 

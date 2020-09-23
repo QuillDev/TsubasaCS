@@ -1,4 +1,53 @@
-﻿$HEADER$namespace $NAMESPACE$
+﻿using System;
+using System.Threading.Tasks;
+using Discord;
+using Tsubasa.Services.Music_Services;
+
+namespace Tsubasa.Services.AnimeServices
 {
-  public class $CLASS$ {$END$}
+    public class HentaiService
+    {
+        private readonly DanbooruSearchService _danbooru;
+        private readonly EmbedService _embedService;
+
+        public HentaiService(DanbooruSearchService danbooru, EmbedService embedService)
+        {
+            _danbooru = danbooru;
+            _embedService = embedService;
+        }
+
+        public async Task<Embed> GetHentaiAsync(ITextChannel channel, string query)
+        {
+            
+            //check if the channel is nsfw
+            if (!channel.IsNsfw)
+            {
+                return _embedService.CreateErrorEmbed($"Hentai - {query}",
+                    "Cannot use this command in an NSFW channel for more info on how to set a channel as NSFW refer to the following url\nhttps://support.discord.com/hc/en-us/articles/115000084051-NSFW-Channels-and-Content");
+            }
+            
+            //get the url using the random hentai gen from Danboroo
+            var url = await _danbooru.GetRandomHentaiAsync(query);
+
+            //if the string is null or empty create the error embed
+            if (string.IsNullOrEmpty(url))
+            {
+                return _embedService.CreateErrorEmbed($"Hentai - {query}", $"Could not find hentai for image {query}");
+            }
+
+            //create embed using the embed builder
+            var embed = new EmbedBuilder
+            {
+                Title = $"Hentai - {query}",
+                Author = new EmbedAuthorBuilder
+                {
+                    Name = "Tsubasa"
+                },
+                ImageUrl = url,
+                Timestamp = DateTimeOffset.Now
+            }.Build();
+
+            return embed;
+        }
+    }
 }

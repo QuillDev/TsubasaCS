@@ -79,8 +79,6 @@ namespace Tsubasa.Services.Music_Services
 
         public async Task<List<Task<string>>> PlaylistToYoutubeAsync(string playlistId)
         {
-            var sw = new Stopwatch();
-            sw.Start();
             //List of queries from the spotify playlist
             var queries = await TracksToQueriesAsync(await GetTracksFromPlaylistAsync(playlistId).ConfigureAwait(false)).ConfigureAwait(false);
 

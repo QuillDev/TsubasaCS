@@ -34,13 +34,21 @@ namespace Tsubasa.Services
 
         public async Task HandleCommandAsync(SocketMessage arg)
         {
-            if (!(arg is SocketUserMessage msg)) return;
+            //if he user is not a socket user return
+            if (!(arg is SocketUserMessage msg))
+            {
+                return;
+            }
+            
 
             //position where prefix ends and commands begin
             var argPos = 0;
 
             //Checks if we have the prefix or if we mentioned the bot
-            if (!msg.HasMentionPrefix(_client.CurrentUser, ref argPos)) return;
+            if (!msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            {
+                return;
+            }
 
             //create the command context to prepare it for execution
             var context = new ShardedCommandContext(_client, msg);
