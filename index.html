@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+    <header>
+
+    <!-- Add Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="./basic.css" type="text/css">
+    <script src="scripts/typewriter.js"></script>
+
+</header>
+
+<body onload="startWriter()">
+
+    <!-- Code for navigation bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <b><a class="navbar-brand" href="#">『Tsubasa』つばさ </a></b>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#modules">Modules</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://github.com/quilldev/tsubasa">Github</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- General Bot information -->
+    <div class="info">
+        <logo>『Tsubasa』</logo>
+        <p>Tsubasa is a general purpose discord bot written in C# using the Discord.NET library by indie dev "QuillDev"</p>
+        <img src="resources/command-example.PNG">
+        <br>
+        <div class="code-bg">
+            <code id="typewriter">t></code>
+        </div>
+
+    </div>
+
+    <!-- add a divider -->
+    <hr class="divider-thick">
+
+    <!-- Modules -->
+    <div id="modules">
+        <h1> Modules </h1>
+        <p> Skip to a module by clicking it here.</p>
+        <a href="#music"><button type="button" class="btn btn-dark">Music</button></a>
+        <a href="#hentai"><button href="#hentai" type="button" class="btn btn-dark">Hentai</button></a>
+        <hr class="divider">
+
+        <!-- Music Module -->
+        <div class="module">
+            <header id="music"> Music </header>
+            <table class="table table-dark table-bordered">
+                <thead>
+                    <tr class="table-head">
+
+                        <th scope="col">Command</th>
+                        <th scope="col">Arguments</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Play</td>
+                        <td>{song}</td>
+                        <td>Searches YouTube/Soundclouse for the song entered</td>
+                    </tr>
+                    <tr>
+
+                        <td>Queue</td>
+                        <td>None</td>
+                        <td>Shows songs in the queue</td>
+                    </tr>
+                    <tr>
+                        <td>Skip</td>
+                        <td>None</td>
+                        <td>Skips the song currently playing.</td>
+                    </tr>
+                    <tr>
+                        <td>Playing</td>
+                        <td>None</td>
+                        <td>Shows progress and name fo the song currently playing.</td>
+                    </tr>
+                    <tr>
+                        <td>Art</td>
+                        <td>None</td>
+                        <td>Gets the art/thumbnail of the song currently playing.</td>
+                    </tr>
+                    <tr>
+                        <td>Leave</td>
+                        <td>None</td>
+                        <td>Causes Tsubasa to stop playing the current song and leave.</td>
+                    </tr>
+                    <tr>
+                        <td>Join</td>
+                        <td>None</td>
+                        <td>Causes Tsubasa to join the voice channel of the command user.</td>
+                    </tr>
+                    <tr>
+                        <td>Volume</td>
+                        <td>{0-150}</td>
+                        <td>Sets the volume of the music playing to the selected volume</td>
+                    </tr>
+                    <tr>
+                        <td>Pause</td>
+                        <td>None</td>
+                        <td>Pauses the currently playing track.</td>
+                    </tr>
+                    <tr>
+                        <td>Resumes</td>
+                        <td>None</td>
+                        <td>Resumes the track if it was paused.</td>
+                    </tr>
+                    <tr>
+                        <td>Seek</td>
+                        <td>{time(seconds)}</td>
+                        <td>Seeks to the time in the song supplied.</td>
+                    </tr>
+                    <tr>
+                        <td>Lyrics</td>
+                        <td>None</td>
+                        <td>NOTE: Buggy - Gets lyrics for the current song if supported.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr class="divider">
+
+            <!-- Music Module -->
+            <div class="module">
+                <header id="hentai"> Hentai </header>
+                <table class="table table-dark table-bordered">
+                    <thead>
+                        <tr class="table-head">
+
+                            <th scope="col">Command</th>
+                            <th scope="col">Arguments</th>
+                            <th scope="col">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Hentai</td>
+                            <td>{query}</td>
+                            <td>Searches danbooru for hentai matching the given query.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body></html>
