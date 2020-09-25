@@ -45,7 +45,7 @@ namespace Tsubasa.Services
             var argPos = 0;
 
             //Checks if we have the prefix or if we mentioned the bot
-            if (!msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
+            if (!msg.HasMentionPrefix(_client.CurrentUser, ref argPos) && !msg.HasStringPrefix("t>", ref argPos) && !msg.HasStringPrefix("T>", ref argPos) )
             {
                 return;
             }

@@ -23,7 +23,7 @@ namespace Tsubasa.Services.AnimeServices
             if (!channel.IsNsfw)
             {
                 return _embedService.CreateErrorEmbed($"Hentai - {query}",
-                    "Cannot use this command in an NSFW channel for more info on how to set a channel as NSFW refer to the following url\nhttps://support.discord.com/hc/en-us/articles/115000084051-NSFW-Channels-and-Content");
+                    "Cannot use this command in a non NSFW channel for more info on how to set a channel as NSFW refer to the following url\nhttps://support.discord.com/hc/en-us/articles/115000084051-NSFW-Channels-and-Content");
             }
             
             //get the url using the random hentai gen from Danboroo

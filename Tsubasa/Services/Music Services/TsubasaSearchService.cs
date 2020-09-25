@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Victoria;
 
 namespace Tsubasa.Services.Music_Services
 {
@@ -10,15 +8,12 @@ namespace Tsubasa.Services.Music_Services
         private readonly SpotifyService _spotifyService;
         private readonly YoutubeScraperService _youtubeScraperService;
         
-        //TODO remove
-        private readonly LavaNode _lavaNode;
 
         //Create TsubasaSearch using the lavanode
-        public TsubasaSearch(SpotifyService spotifyService, YoutubeScraperService youtubeScraperService, LavaNode lavaNode)
+        public TsubasaSearch(SpotifyService spotifyService, YoutubeScraperService youtubeScraperService)
         {
             _spotifyService = spotifyService;
             _youtubeScraperService = youtubeScraperService;
-            _lavaNode = lavaNode;
         }
 
         /// <summary>
@@ -30,7 +25,12 @@ namespace Tsubasa.Services.Music_Services
         {
             return await FormatQueryAsync(query).ConfigureAwait(false);
         }
-
+        
+        /// <summary>
+        /// Format a query into a usable list of track strings for tsubasa
+        /// </summary>
+        /// <param name="query">The query to find songs for </param>
+        /// <returns>A list of strings to check in lava player</returns>
         private async Task<List<Task<string>>> FormatQueryAsync(string query)
         {
             var trackTasks = new List<Task<string>>();
@@ -48,10 +48,10 @@ namespace Tsubasa.Services.Music_Services
                 trackTasks.Add(Task.FromResult(query));
                 return trackTasks;
             }
-
+            
+            //if the query is a spotify playlist
             if (query.Contains("spotify.com/playlist/"))
             {
-                //TODO Pickup here tomorrow and implement dynamic loading on long playlists!
 
                 //save a copy of the query and name it id
                 var id = query;

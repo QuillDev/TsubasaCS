@@ -11,8 +11,6 @@ using Victoria.EventArgs;
 
 namespace Tsubasa.Services.Music_Services
 {
-    //TODO This in places we can https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/async/start-multiple-async-tasks-and-process-them-as-they-complete
-    //TODO Rework the rest of this file to the standard of PlayAsync()!
     public class MusicService
     {
         private readonly LavaNode _lavaNode;
@@ -67,7 +65,6 @@ namespace Tsubasa.Services.Music_Services
         {
             try
             {
-                //TODO This needs a MAJOR Refactor. plz fix
                 //Get the guild off the user
                 IGuild guild = user.Guild;
 
@@ -123,7 +120,7 @@ namespace Tsubasa.Services.Music_Services
                 }
 
                 //make sure we've joined
-                //TODO this is rlly rough find a better way mayb
+                //TODO Seems to connect even when song fails, plz fix rito
                 await JoinAsync(user).ConfigureAwait(false);
                 
                 //if there is only one song in the master track list give a different message saying so
@@ -264,8 +261,11 @@ namespace Tsubasa.Services.Music_Services
 
                 //if the player doesn't exist, say that we could not acquire the player
                 if (player == null)
+                {
                     return await _embedService.CreateBasicEmbedAsync("Music, List",
                         "Could not acquire player.\nAre you using the bot right now?");
+                }
+                    
                 if (player.Queue.Count == 0)
                 {
                     //Leave if the queue count is zero
@@ -532,7 +532,7 @@ namespace Tsubasa.Services.Music_Services
                     
 
                 //Calculate iterations as the lyrics length / 1000
-                var iterations = (int) Math.Ceiling(lyrics.Length / 1000.0); //TODO change unit to 1024? need more testing
+                var iterations = (int) Math.Ceiling(lyrics.Length / 1024.0);
                 
                 //Iterate through the iterations and split the embed up
                 for (var index = 0; index < iterations; index++)
@@ -581,8 +581,7 @@ namespace Tsubasa.Services.Music_Services
             { 
                 return;
             }
-
-            //TODO check if this broke OnTrackFinished
+            
             if (!player.Queue.TryDequeue(out
                 var item) || !(item is {}
                 nextTrack))

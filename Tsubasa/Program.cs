@@ -19,13 +19,9 @@ namespace Tsubasa
 {
     internal class Program
     {
-        //TODO Documentation for all the methods I made today @9/14/2020
         private const string ConfigPath = "config.toml";
         private static BotSettings _config;
         private SpotifyClient _spotifyClient;
-
-        //Declare member vars for service and config
-        private IServiceProvider _services;
 
         private static void Main()
         {
@@ -38,23 +34,24 @@ namespace Tsubasa
             //move the program to an async context
             new Program().StartAsync().GetAwaiter().GetResult();
         }
-
-        //TODO setup logging for all files that should really have it
+        
         private async Task StartAsync()
         {
+            //Declare member vars for service and config
+
             //Create the spotify client
             _spotifyClient = await AuthenticateSpotifyAsync().ConfigureAwait(false);
 
             //Build services
-            _services = BuildServices();
+            var services = BuildServices();
 
             //get the bot from our services
-            var bot = _services.GetRequiredService<DiscordShardedClient>();
+            var bot = services.GetRequiredService<DiscordShardedClient>();
             bot.Log += Logger.Log;
 
             //Configure EventHandlerService and CommandHandlerService
-            _services.GetRequiredService<DiscordEventHandlerService>().Configure();
-            await _services.GetRequiredService<CommandHandlerService>().ConfigureAsync();
+            services.GetRequiredService<DiscordEventHandlerService>().Configure();
+            await services.GetRequiredService<CommandHandlerService>().ConfigureAsync();
 
             //log the bot in
             await bot.LoginAsync(TokenType.Bot, _config.DiscordSettings.BotToken);
@@ -67,7 +64,6 @@ namespace Tsubasa
 
         private IServiceProvider BuildServices()
         {
-            //TODO Add any new services we add here
             return new ServiceCollection()
                 //Add general discord related services
                 .AddSingleton(new DiscordShardedClient(_config.DiscordSettings.ShardIds, new DiscordSocketConfig
