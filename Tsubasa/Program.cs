@@ -92,6 +92,8 @@ namespace Tsubasa
                 .AddSingleton<DanbooruSearchService>()
                 .AddSingleton<HentaiService>()
                 
+                //add general command services
+                .AddSingleton<GeneralService>()
                 //add general utility services
                 .AddSingleton<WebRequestService>()
                 .AddSingleton<EmbedService>()

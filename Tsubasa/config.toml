@@ -1,8 +1,0 @@
-BotName = "Tsubasa"
-MusicModuleName = "Tsubasa Audio#1"
-SpotifyId = "53ea37ead5da4c3aa4c97ae98bb2e671"
-SpotifySecret = "ab5008f05edb42fb93100895e74cbb8f"
-
-[DiscordSettings]
-BotToken = "NzUzNzY0MjMzNDg0ODI4NzAz.X1q7pQ.X0NUAe5s9Uo2ZEUBBdJnSmAXEnY"
-ShardIds = [0, 1, 2]
