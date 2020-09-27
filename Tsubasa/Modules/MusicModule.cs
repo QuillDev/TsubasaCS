@@ -81,18 +81,6 @@ namespace Tsubasa.Modules
             await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser) Context.User, seconds));
         }
 
-        [Command("Time")]
-        public async Task Time(int seconds)
-        {
-            await ReplyAsync(embed: await _music.SeekAsync((SocketGuildUser) Context.User, seconds));
-        }
-
-        [Command("Loop")]
-        public async Task Loop()
-        {
-            await ReplyAsync(embed: await _music.LoopTrack((SocketGuildUser) Context.User));
-        }
-
         [Command("Art")]
         public async Task Art()
         {

@@ -4,7 +4,6 @@ using Discord.WebSocket;
 
 namespace Tsubasa.Services.Music_Services
 {
-    //TODO Make this a service?
     public class EmbedService
     {
 
@@ -23,7 +22,13 @@ namespace Tsubasa.Services.Music_Services
             Exception = 30,
             Basic = 1
         }
-
+        
+        /// <summary>
+        /// Create embed for printing error messages with special red color
+        /// </summary>
+        /// <param name="title">The title of the embed</param>
+        /// <param name="body">the body of the embed</param>
+        /// <returns>a status embed special to errors</returns>
         public Embed CreateErrorEmbed(string title, string body)
         {
             //Create the embed builder
@@ -67,7 +72,7 @@ namespace Tsubasa.Services.Music_Services
         //overload for main method
         public async Task<Embed> CreateBasicEmbedAsync(string title, string description)
         {
-            return await CreateBasicEmbedAsync(title, description, null);
+            return await CreateBasicEmbedAsync(title, description, null).ConfigureAwait(false);
         }
         
         /// <summary>

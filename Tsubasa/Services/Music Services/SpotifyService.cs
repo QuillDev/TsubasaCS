@@ -66,7 +66,10 @@ namespace Tsubasa.Services.Music_Services
             var queryList = await Task.Run(() =>
             {
                 //make sure tracks does not come in as null
-                if (tracks == null) throw new ArgumentNullException(nameof(tracks));
+                if (tracks == null)
+                {
+                    throw new ArgumentNullException(nameof(tracks));
+                }
 
                 //create list for queries
                 var queries = tracks.Select(track => $"{track.Name} {track.Artists[0].Name}").ToList();
