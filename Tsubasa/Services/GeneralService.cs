@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Discord;
@@ -26,7 +27,21 @@ namespace Tsubasa.Services
             return _embed.CreateBasicEmbedAsync("Tsubasa - Help",
                 "Information about commands can be found here\nhttps://quilldev.github.io/Tsubasa/");
         }
-        
+        public async Task<Embed> SendProfilePictureAsync(SocketUserMessage message)
+        {
+            var mentions = message.MentionedUsers;
+            
+            //if the mentions count is zero send the authors PFP
+            if (mentions.Count == 0)
+            {
+                return await _embed.CreateImageEmbedAsync($"PFP For {message.Author.Username}",
+                    message.Author.GetAvatarUrl());
+            }
+            
+            //Get the user 
+            var user = mentions.ElementAt(0);
+            return await _embed.CreateImageEmbedAsync($"PFP For {user.Username}", user.GetAvatarUrl());
+        }
         /// <summary>
         /// Get information about the guild as an embed
         /// </summary>

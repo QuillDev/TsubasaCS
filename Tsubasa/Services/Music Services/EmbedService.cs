@@ -69,6 +69,26 @@ namespace Tsubasa.Services.Music_Services
 
             return embed;
         }
+        
+        /// <summary>
+        /// Create an embed specifically designed for presenting images
+        /// </summary>
+        /// <param name="title">The title of the embed</param>
+        /// <param name="url"> The url to the image</param>
+        /// <returns>An embed displaying the image</returns>
+        public async Task<Embed> CreateImageEmbedAsync(string title, string url)
+        {
+            //Create the image embeds
+            var embed = await Task.Run(() => new EmbedBuilder()
+                .WithTitle(title)
+                .WithCurrentTimestamp()
+                .WithColor(GetEmbedColor(EmbedMessageType.Basic))
+                .WithImageUrl(url)
+                .Build()
+            );
+
+            return embed;
+        }
         //overload for main method
         public async Task<Embed> CreateBasicEmbedAsync(string title, string description)
         {

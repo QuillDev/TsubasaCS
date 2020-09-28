@@ -35,19 +35,7 @@ namespace Tsubasa.Services.AnimeServices
                 return _embedService.CreateErrorEmbed($"Hentai - {query}", $"Could not find hentai for image {query}");
             }
 
-            //create embed using the embed builder
-            var embed = new EmbedBuilder
-            {
-                Title = $"Hentai - {query}",
-                Author = new EmbedAuthorBuilder
-                {
-                    Name = "Tsubasa"
-                },
-                ImageUrl = url,
-                Timestamp = DateTimeOffset.Now
-            }.Build();
-
-            return embed;
+            return await _embedService.CreateImageEmbedAsync($"Hentai - {query}", url);
         }
     }
 }
