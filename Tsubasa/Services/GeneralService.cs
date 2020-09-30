@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
@@ -27,20 +26,28 @@ namespace Tsubasa.Services
             return _embed.CreateBasicEmbedAsync("Tsubasa - Help",
                 "Information about commands can be found here\nhttps://quilldev.github.io/Tsubasa/");
         }
+        
+        /// <summary>
+        /// Sends the PFP of the user into the chat
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
+        public async Task<Embed> SendProfilePictureAsync(SocketGuildUser user)
+        {
+            //send their image into the chat
+            return await _embed.CreateImageEmbedAsync($"Profile Pic for {user.Nickname}", user.GetAvatarUrl());
+        }
+
         public async Task<Embed> SendProfilePictureAsync(SocketUserMessage message)
         {
-            var mentions = message.MentionedUsers;
-            
-            //if the mentions count is zero send the authors PFP
-            if (mentions.Count == 0)
+            //if there are any mentioned users print an embed with them
+            if (message.MentionedUsers.Any())
             {
-                return await _embed.CreateImageEmbedAsync($"PFP For {message.Author.Username}",
-                    message.Author.GetAvatarUrl());
+                return await SendProfilePictureAsync((SocketGuildUser) message.MentionedUsers.ElementAt(0));
             }
             
-            //Get the user 
-            var user = mentions.ElementAt(0);
-            return await _embed.CreateImageEmbedAsync($"PFP For {user.Username}", user.GetAvatarUrl());
+            //if that didnt work print an error message
+            return _embed.CreateErrorEmbed("Tsubasa - PFP", "Couldn't get the PFP for the mentioned user.");
         }
         /// <summary>
         /// Get information about the guild as an embed
@@ -89,6 +96,37 @@ namespace Tsubasa.Services
                 return asyncEmbed;
             }).ConfigureAwait(false);
             return embed;
+        }
+
+        /// <summary>
+        /// Send the invite URL of the bot into the server via an embed
+        /// </summary>
+        /// <param name="client"></param>
+        /// <returns>An embed with the invite url</returns>
+        public async Task<Embed> SendInviteAsync(DiscordShardedClient client)
+        {
+            
+            //Generate the embed asynchronously using task.run
+            var result = Task.Run(() =>
+            {
+                
+                //TODO see if i want to add an extra method to embed helper class for this kinda stuff
+                const string url = "https://discord.com/oauth2/authorize?client_id=753764233484828703&permissions=2147483639&scope=bot";
+                var inviteEmbed = new EmbedBuilder()
+                    .WithAuthor(new EmbedAuthorBuilder
+                    {
+                        Url = url,
+                        IconUrl = client.CurrentUser.GetAvatarUrl(),
+                        Name = " > Invite Tsubasa to your server! <",
+                    })
+                    .WithUrl(url)
+                    .WithColor(Color.Purple)
+                    .Build();
+
+                return inviteEmbed;
+            });
+
+            return await result;
         }
     }
 }

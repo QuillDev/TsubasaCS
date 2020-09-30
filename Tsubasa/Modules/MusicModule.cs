@@ -43,8 +43,14 @@ namespace Tsubasa.Modules
         {
             await ReplyAsync(embed: await _music.SkipTrackAsync((SocketGuildUser) Context.User));
         }
-
-        [Command("volume")]
+        
+        [Command("volume"), Priority(0)]
+        public async Task Volume()
+        {
+            await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User));
+        }
+        
+        [Command("volume"), Priority(0)]
         public async Task Volume(int percent)
         {
             await ReplyAsync(embed: await _music.VolumeAsync((SocketGuildUser) Context.User, percent));
