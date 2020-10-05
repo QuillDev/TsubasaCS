@@ -13,6 +13,8 @@
       <PackageReference Include="SpotifyAPI.Web" Version="6.0.0-beta.12" />
       <PackageReference Include="SpotifyAPI.Web.Auth" Version="6.0.0-beta.12" />
       <PackageReference Include="Victoria" Version="5.1.9" />
+      <PackageReference Include="VideoLibrary" Version="3.0.6" />
+      <PackageReference Include="Xabe.FFmpeg" Version="4.3.1" />
     </ItemGroup>
 
 </Project>

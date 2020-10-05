@@ -29,29 +29,35 @@ namespace Tsubasa.Services.Music_Services
         /// <param name="title">The title of the embed</param>
         /// <param name="body">the body of the embed</param>
         /// <returns>a status embed special to errors</returns>
-        public Embed CreateErrorEmbed(string title, string body)
+        public async Task<Embed> CreateErrorEmbed(string title, string body)
         {
-            //Create the embed builder
-            var embed = new EmbedBuilder();
-
-            //get the users avatar url
-            var thumbnailUrl = _client.CurrentUser.GetAvatarUrl();
-
-            //Build the author of the embed
-            var author = new EmbedAuthorBuilder
+            //The result of creating the embed.
+            var result = await Task.Run(() =>
             {
-                Name = _client.CurrentUser.Username,
-                IconUrl = thumbnailUrl
-            };
+                //Create the embed builder
+                var embed = new EmbedBuilder();
 
-            //Add properties to the embed
-            embed.WithAuthor(author);
-            embed.WithTitle(title);
-            embed.WithDescription(body);
-            embed.WithColor(GetEmbedColor(EmbedMessageType.Error));
-            embed.WithCurrentTimestamp();
+                //get the users avatar url
+                var thumbnailUrl = _client.CurrentUser.GetAvatarUrl();
 
-            return embed.Build();
+                //Build the author of the embed
+                var author = new EmbedAuthorBuilder
+                {
+                    Name = _client.CurrentUser.Username,
+                    IconUrl = thumbnailUrl
+                };
+
+                //Add properties to the embed
+                embed.WithAuthor(author);
+                embed.WithTitle(title);
+                embed.WithDescription(body);
+                embed.WithColor(GetEmbedColor(EmbedMessageType.Error));
+                embed.WithCurrentTimestamp();
+
+                return embed.Build();
+            });
+
+            return result;
         }
         
         public async Task<Embed> CreateBasicEmbedAsync(string title, string description, string footer)

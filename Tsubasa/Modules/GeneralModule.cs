@@ -63,5 +63,11 @@ namespace Tsubasa.Modules
         {
             await ReplyAsync(embed: await _generalService.SendInviteAsync(Context.Client));
         }
+
+        [Command("source"), Alias("src", "github")]
+        public async Task SendBotSourceUrl()
+        {
+            await ReplyAsync(embed: await _generalService.SendSourceAsync());
+        }
     }
 }

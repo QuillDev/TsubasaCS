@@ -11,7 +11,7 @@ namespace Tsubasa.Services
     public class GeneralService
     {
         private readonly EmbedService _embed;
-        
+
         public GeneralService(EmbedService embed)
         {
             _embed = embed;
@@ -47,7 +47,7 @@ namespace Tsubasa.Services
             }
             
             //if that didnt work print an error message
-            return _embed.CreateErrorEmbed("Tsubasa - PFP", "Couldn't get the PFP for the mentioned user.");
+            return await _embed.CreateErrorEmbed("Tsubasa - PFP", "Couldn't get the PFP for the mentioned user.");
         }
         /// <summary>
         /// Get information about the guild as an embed
@@ -127,6 +127,16 @@ namespace Tsubasa.Services
             });
 
             return await result;
+        }
+        
+        /// <summary>
+        /// Responds to the message with an embed that sends a url to by github
+        /// </summary>
+        /// <returns>An embed with tsubasas github</returns>
+        public async Task<Embed> SendSourceAsync()
+        {
+            return await _embed.CreateBasicEmbedAsync("Tsubasa - Source Code",
+                "The source code for Tsubasa and my other projects can be found here!\nhttps://github.com/QuillDev/");
         }
     }
 }

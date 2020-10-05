@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -74,12 +73,6 @@ namespace Tsubasa.Services.Music_Services
                 {
                     return await _embed.CreateBasicEmbedAsync("Music Play", "You must be in a channel first!");
                 }
-                
-                //if the guild doesn't have a player, join the person who requested the bot's voice channel
-                if (!_lavaNode.HasPlayer(guild))
-                {
-                    await JoinAsync(user).ConfigureAwait(false);
-                }
 
                 //create list for holding tracks in
                 var masterTrackList = new List<LavaTrack>();
@@ -121,8 +114,11 @@ namespace Tsubasa.Services.Music_Services
                 }
 
                 //make sure we've joined
-                //TODO Seems to connect even when song fails, plz fix rito
-                await JoinAsync(user).ConfigureAwait(false);
+                if (!_lavaNode.HasPlayer(guild))
+                {
+                    await JoinAsync(user).ConfigureAwait(false);
+                }
+                
                 
                 //if there is only one song in the master track list give a different message saying so
                 if (masterTrackList.Count == 1)
@@ -138,7 +134,7 @@ namespace Tsubasa.Services.Music_Services
 
             catch (Exception e)
             {
-                return _embed.CreateErrorEmbed("Player Error",
+                return await _embed.CreateErrorEmbed("Player Error",
                     $"Error: {e.Message}\n\nIf this looks like a bug, report it here!\nhttps://github.com/QuillDev/Tsubasa/issues");
             }
         }
@@ -280,7 +276,7 @@ namespace Tsubasa.Services.Music_Services
                     var currentTrack = player.Track;
                     await player.SkipAsync();
                     return await _embed.CreateBasicEmbedAsync("Music Skip",
-                        $"Successfully skipped {currentTrack.Title}\nNow Playing{player.Track.Title}");
+                        $"Successfully skipped {currentTrack.Title}\nNow Playing: {player.Track.Title}");
                 }
                 catch (Exception ex)
                 {
@@ -292,7 +288,7 @@ namespace Tsubasa.Services.Music_Services
                 return await _embed.CreateBasicEmbedAsync("Music Skip", ex.ToString());
             }
         }
-        
+
         /// <summary>
         /// Adjust the volume of the player 
         /// </summary>
@@ -306,7 +302,7 @@ namespace Tsubasa.Services.Music_Services
             {
                 return await _embed.CreateBasicEmbedAsync("Music Volume", "Volume must be between 1 and 149.");
             }
-                
+
             try
             {
                 //get the player 
@@ -314,7 +310,7 @@ namespace Tsubasa.Services.Music_Services
 
                 //update the volume
                 await player.UpdateVolumeAsync((ushort) volume);
-                
+
                 return await _embed.CreateBasicEmbedAsync("🔊 Music Volume", $"Volume has been set to {volume}.");
             }
             catch (InvalidOperationException ex)
@@ -324,6 +320,41 @@ namespace Tsubasa.Services.Music_Services
             }
         }
         
+        /// <summary>
+        /// Clears the queue without stopping the current
+        /// </summary>
+        /// <param name="user">the user who used the command</param>
+        /// <returns>an embed with info about the commands execution</returns>
+        public async Task<Embed> ClearQueueAsync(SocketGuildUser user)
+        {
+            var guild = user.Guild;
+            
+            //Check if the guild has a player
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                return await _embed.CreateErrorEmbed("Tsubasa - Clear",
+                    "This guild does not have a music player currently playing");
+            }
+            
+            //get the guilds player
+            var player = _lavaNode.GetPlayer(guild);
+            
+            //get the queue of the player
+            var queue = player.Queue;
+            
+            //if the queue has 0 items in it
+            if (queue.Count == 0)
+            {
+                return await _embed.CreateErrorEmbed("Tsubasa - Clear", "The queue is already empty.");
+            }
+            
+            
+            //clear the queue
+            queue.Clear();
+
+            return await _embed.CreateBasicEmbedAsync("Tsubasa - Clear", "Successfully emptied the queue!");
+        }
+
         /// <summary>
         /// Overload for Volume Async that that runs when a volume was not specified, prints out the volume %
         /// </summary>
@@ -337,7 +368,7 @@ namespace Tsubasa.Services.Music_Services
             //if the guild does not have a music player, something happened
             if (!_lavaNode.HasPlayer(guild))
             {
-                return _embed.CreateErrorEmbed("Tsubasa - Volume", "This guild does not have a music player");
+                return await _embed.CreateErrorEmbed("Tsubasa - Volume", "This guild does not have a music player");
             }
             
             //get the guild's player
@@ -346,7 +377,7 @@ namespace Tsubasa.Services.Music_Services
             //if the player is not playing a track return that there was no track
             if (player.PlayerState != PlayerState.Playing)
             {
-                return _embed.CreateErrorEmbed("Tsubasa - Volume", "No track is currently playing.");
+                return await _embed.CreateErrorEmbed("Tsubasa - Volume", "No track is currently playing.");
             }
 
             return await _embed.CreateBasicEmbedAsync("Tsubasa - Volume",
