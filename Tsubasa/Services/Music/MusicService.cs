@@ -81,7 +81,13 @@ namespace Tsubasa.Services.Music_Services
                 //Search for the formatted song url
                 var urls = await _tsubasaSearch.GetSongUrlAsync(query);
                 
-                //TODO this works but seems like SUPER SUPER slow
+                
+                //if the guild doesn't have a player, join
+                if (!_lavaNode.HasPlayer(guild) && urls.Any())
+                {
+                    await JoinAsync(user);
+                }
+                
                 //Do our iteration 
                 while (urls.Any())
                 {
@@ -113,13 +119,6 @@ namespace Tsubasa.Services.Music_Services
                         $"Couldn't load songs for the given query {query}.");
                 }
 
-                //make sure we've joined
-                if (!_lavaNode.HasPlayer(guild))
-                {
-                    await JoinAsync(user).ConfigureAwait(false);
-                }
-                
-                
                 //if there is only one song in the master track list give a different message saying so
                 if (masterTrackList.Count == 1)
                 {
@@ -134,6 +133,7 @@ namespace Tsubasa.Services.Music_Services
 
             catch (Exception e)
             {
+                Console.WriteLine(e.StackTrace);
                 return await _embed.CreateErrorEmbed("Player Error",
                     $"Error: {e.Message}\n\nIf this looks like a bug, report it here!\nhttps://github.com/QuillDev/Tsubasa/issues");
             }
@@ -226,7 +226,7 @@ namespace Tsubasa.Services.Music_Services
                         //If the track number is between 0 and 4 then print it in the queue
                         else if (trackNum <= maxTracks)
                         {
-                            descriptionBuilder.Append($"#{trackNum}: [{track.Title}]({track.Url})\n");
+                            descriptionBuilder.Append($"#{trackNum-1}: [{track.Title}]({track.Url})\n");
                             trackNum++;
                         }
                         else
@@ -625,6 +625,45 @@ namespace Tsubasa.Services.Music_Services
                     "Failed to retrieve lyrics by either an error, or the source doesn't have any\n" +
                     exception.Message);
             }
+        }
+
+        public async Task<Embed> RemoveSongAsync(SocketGuildUser user, int position)
+        {
+            var guild = user.Guild;
+            
+            //if the guild has no player
+            if (!_lavaNode.HasPlayer(guild))
+            {
+                return await _embed.CreateErrorEmbed("Tsubasa - Remove", "This guild does not have a player");
+            }
+            
+            //get the player
+            var player = _lavaNode.GetPlayer(guild);
+            
+            //get the queue
+            var queue = player.Queue;
+            
+            //if there are no songs in queue
+            if (queue.Count == 0)
+            {
+                return await _embed.CreateErrorEmbed("Tsubasa - Remove", "No songs in queue.");
+            }
+            
+            //if they tried to remove a song less than 1
+            if (position < 1 || position > queue.Count)
+            {
+                return await _embed.CreateErrorEmbed("Tsubasa - Remove",
+                    $"Invalid index, acceptable indexes are 1 - {queue.Count}");
+            }
+            
+            //if the index is valid remove that song
+            var track = queue.ElementAt(position - 1);
+            
+            //remove the track given
+            queue.RemoveAt(position - 1);
+
+            return await _embed.CreateBasicEmbedAsync("Tsubasa - Remove",
+                $"Removed track {track.Title} at position {position}");
         }
         
         /// <summary>

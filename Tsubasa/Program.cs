@@ -11,7 +11,10 @@ using SpotifyAPI.Web;
 using Tsubasa.Helper;
 using Tsubasa.Models;
 using Tsubasa.Services;
+using Tsubasa.Services.Anime;
 using Tsubasa.Services.AnimeServices;
+using Tsubasa.Services.LeagueOfLegends;
+using Tsubasa.Services.LeagueOfLegendsService;
 using Tsubasa.Services.Music_Services;
 using Victoria;
 
@@ -91,9 +94,14 @@ namespace Tsubasa
                 //Add anime related services
                 .AddSingleton<DanbooruSearchService>()
                 .AddSingleton<HentaiService>()
+                .AddSingleton<MyAnimeListService>()
                 
                 //add general command services
                 .AddSingleton<GeneralService>()
+                
+                //Add lol command services
+                .AddSingleton<LolApiService>()
+                .AddSingleton<LolCommandService>()
                 
                 //add general utility services
                 .AddSingleton<WebRequestService>()

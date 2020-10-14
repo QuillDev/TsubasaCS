@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Enumeration;
 using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
+using Swan;
+using Tsubasa.Services.LeagueOfLegends;
+using Tsubasa.Services.LeagueOfLegendsService;
 using Tsubasa.Services.Music_Services;
 
 namespace Tsubasa.Services
@@ -11,10 +16,12 @@ namespace Tsubasa.Services
     public class GeneralService
     {
         private readonly EmbedService _embed;
+        private readonly LolApiService _lol;
 
-        public GeneralService(EmbedService embed)
+        public GeneralService(EmbedService embed, LolApiService lol)
         {
             _embed = embed;
+            _lol = lol;
         }
         
         /// <summary>
@@ -97,7 +104,7 @@ namespace Tsubasa.Services
             }).ConfigureAwait(false);
             return embed;
         }
-
+        
         /// <summary>
         /// Send the invite URL of the bot into the server via an embed
         /// </summary>

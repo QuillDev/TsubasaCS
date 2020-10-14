@@ -26,12 +26,24 @@ namespace Tsubasa.Modules
             await ReplyAsync(embed: await _music.PlayAsync((SocketGuildUser) Context.User, search));
         }
 
-        [Command("leave")]
+        [Command("leave"), Alias("stop")]
         public async Task MusicLeave()
         {
             await ReplyAsync(embed: await _music.LeaveAsync((SocketGuildUser) Context.User));
         }
 
+        [Command("clear")]
+        public async Task ClearQueue()
+        {
+            await ReplyAsync(embed: await _music.ClearQueueAsync((SocketGuildUser) Context.User));
+        }
+
+        [Command("remove"), Alias("rm")]
+        public async Task RemoveSongFromQueue(int position)
+        {
+            await ReplyAsync(embed: await _music.RemoveSongAsync((SocketGuildUser) Context.User, position));
+        }
+        
         [Command("queue")]
         public async Task MusicQueue()
         {
